@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: ayur-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ayur-network
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: ayur-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ayur-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ayur-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ayur-network
+
+volumes:
+  mongo_data:
+  redis_data:
+  qdrant_data:
+
+networks:
+  ayur-network:
+    driver: bridge
