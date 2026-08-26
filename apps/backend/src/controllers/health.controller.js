@@ -56,9 +56,8 @@ export const healthController = {
     // 3. Verify Qdrant connection endpoint
     try {
       const qdrant = getQdrantClient();
-      // Call Qdrant ready check (telemetry or basic configuration endpoint)
-      const telemetry = await qdrant.api('telemetry').getTelemetry();
-      if (telemetry) {
+      const response = await qdrant.getCollections();
+      if (response) {
         status.services.qdrant = 'UP';
       } else {
         hasFailure = true;

@@ -12,3 +12,5 @@ apps/backend/storage/uploads/*
 
 *.log
 .DS_Store
+
+*.txt
