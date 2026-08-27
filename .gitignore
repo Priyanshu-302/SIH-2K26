@@ -14,3 +14,10 @@ apps/backend/storage/uploads/*
 .DS_Store
 
 *.txt
+
+# Datasets and Statutory documents
+statutory_pdfs/
+case_law/
+eval_set/
+VERIFICATION_REPORT.md
+case_law_verified.zip
