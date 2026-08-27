@@ -21,3 +21,5 @@ case_law/
 eval_set/
 VERIFICATION_REPORT.md
 case_law_verified.zip
+gi_registry/
+*.pdf
