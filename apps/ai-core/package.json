@@ -5,7 +5,12 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"No tests yet\""
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "ingest": "node scripts/ingest.js",
+    "evaluate": "node scripts/eval.js"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "vitest": "^4.1.11"
+  }
 }
