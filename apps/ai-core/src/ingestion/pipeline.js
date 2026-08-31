@@ -9,6 +9,24 @@ import { embedDocuments } from '../vectorstore/embeddings.js';
 
 const VALID_CATEGORIES = ['classical_text', 'patent_doc', 'legal_precedent', 'guideline'];
 
+function collectFiles(dir) {
+    let results = [];
+    const list = fs.readdirSync(dir);
+    for (const file of list) {
+        if (file.startsWith('.')) continue;
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+        if (stat && stat.isDirectory()) {
+            results = results.concat(collectFiles(fullPath));
+        } else if (stat && stat.isFile()) {
+            if (file.endsWith('.pdf') || file.endsWith('.txt') || file.endsWith('.md')) {
+                results.push(fullPath);
+            }
+        }
+    }
+    return results;
+}
+
 export async function runIngestion(sourcePath, options = {}) {
     const startTime = Date.now();
 
@@ -25,22 +43,16 @@ export async function runIngestion(sourcePath, options = {}) {
 
     await ensureCollection();
 
-    const files = [];
+    let files = [];
     const stat = fs.statSync(sourcePath);
     if (stat.isFile()) {
         files.push(sourcePath);
     } else if (stat.isDirectory()) {
-        const list = fs.readdirSync(sourcePath);
-        for (const item of list) {
-            const fullPath = path.join(sourcePath, item);
-            if (fs.statSync(fullPath).isFile() && (item.endsWith('.pdf') || item.endsWith('.txt'))) {
-                files.push(fullPath);
-            }
-        }
+        files = collectFiles(sourcePath);
     }
 
     if (files.length === 0) {
-        console.warn(`No valid documents (.pdf or .txt) found at path: ${sourcePath}`);
+        console.warn(`No valid documents (.pdf, .txt, or .md) found at path: ${sourcePath}`);
         return { ingestedCount: 0, timeTakenMs: Date.now() - startTime };
     }
 
