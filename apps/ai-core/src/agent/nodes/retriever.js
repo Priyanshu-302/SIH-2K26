@@ -28,17 +28,29 @@ export async function retrieverNode(state) {
     }
 
     // Query Qdrant
-    const searchParams = {
-      vector,
+    const queryParams = {
+      query: vector,
       limit: config.TOP_K,
       with_payload: true
     };
 
     if (Object.keys(filter).length > 0) {
-      searchParams.filter = filter;
+      queryParams.filter = filter;
     }
 
-    const results = await qdrant.search(COLLECTION_NAME, searchParams);
+    let results = [];
+    if (typeof qdrant.query === 'function') {
+      const response = await qdrant.query(COLLECTION_NAME, queryParams);
+      results = response?.points || (Array.isArray(response) ? response : []);
+    } else if (typeof qdrant.search === 'function') {
+      const response = await qdrant.search(COLLECTION_NAME, {
+        vector,
+        limit: config.TOP_K,
+        filter: Object.keys(filter).length > 0 ? filter : undefined,
+        with_payload: true
+      });
+      results = Array.isArray(response) ? response : (response?.points || []);
+    }
 
     const documents = results.map((hit) => ({
       id: hit.id,

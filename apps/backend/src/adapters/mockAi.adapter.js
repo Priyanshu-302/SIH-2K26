@@ -181,7 +181,7 @@ However, if you demonstrate an unexpected **synergistic effect** (e.g., a specif
       }
     ];
 
-    responseText = `The formulation described in your query directs itself to classical Ayurvedic principles. Under Indian Patent law, specifically Section 3(p) of the Patents Act, 1970, standard Ayurvedic formulations documented in traditional literature (such as the TKDL) are non-patentable. 
+    responseText = `The Triphala formulation described in your query directs itself to classical Ayurvedic principles. Under Indian Patent law, specifically Section 3(p) of the Patents Act, 1970, standard Ayurvedic formulations documented in traditional literature (such as the TKDL) are non-patentable. 
 
 To achieve patentability, you must demonstrate a non-obvious synergistic composition with enhanced therapeutic efficacy under Section 3(e) or 3(d).`;
   }

@@ -53,23 +53,26 @@ vi.mock('@langchain/groq', () => {
 
 
 vi.mock('../src/vectorstore/qdrant-client.js', () => {
+    const mockPoints = [
+        {
+            id: 'test-doc-uuid-1',
+            score: 0.85,
+            payload: {
+                text: 'Traditional knowledge is not patentable.',
+                source: 'Patents Act, 1970',
+                category: 'patent_doc',
+                section: 'Section 3(p)',
+                title: 'Inventions Not Patentable',
+                sourceUrl: 'https://ipindia.gov.in/patents-act-1970.pdf',
+                chunkIndex: 0
+            }
+        }
+    ];
+
     return {
         qdrant: {
-            search: vi.fn().mockResolvedValue([
-                {
-                    id: 'test-doc-uuid-1',
-                    score: 0.85,
-                    payload: {
-                        text: 'Traditional knowledge is not patentable.',
-                        source: 'Patents Act, 1970',
-                        category: 'patent_doc',
-                        section: 'Section 3(p)',
-                        title: 'Inventions Not Patentable',
-                        sourceUrl: 'https://ipindia.gov.in/patents-act-1970.pdf',
-                        chunkIndex: 0
-                    }
-                }
-            ])
+            search: vi.fn().mockResolvedValue(mockPoints),
+            query: vi.fn().mockResolvedValue({ points: mockPoints })
         }
     };
 });
