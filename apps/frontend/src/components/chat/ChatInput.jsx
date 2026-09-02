@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Send, Paperclip } from 'lucide-react';
 import { useChatStream } from '../../hooks/useChatStream';
+import { useDocumentStore } from '../../store/documentStore';
 
 export function ChatInput() {
   const [query, setQuery] = useState('');
   const { submitQuery, isStreaming } = useChatStream();
+  const { setIsUploadModalOpen } = useDocumentStore();
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -26,8 +28,9 @@ export function ChatInput() {
       <div className="flex items-end gap-1.5 sm:gap-2 bg-alabaster-100 border border-sage-200 rounded-2xl p-1.5 sm:p-2 focus-within:border-ayur-600 focus-within:ring-2 focus-within:ring-ayur-100 transition-all shadow-inner">
         <button
           type="button"
-          className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
-          title="Attach claim document"
+          onClick={() => setIsUploadModalOpen(true)}
+          className="p-1.5 sm:p-2 text-slate-400 hover:text-ayur-700 transition-colors shrink-0 cursor-pointer"
+          title="Attach claim document or patent draft"
           aria-label="Attach claim document"
         >
           <Paperclip className="w-4 h-4" />

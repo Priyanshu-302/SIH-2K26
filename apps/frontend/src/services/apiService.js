@@ -141,3 +141,36 @@ export async function fetchDocumentsAPI() {
 
   return [...mockDocuments];
 }
+
+/**
+ * Fetches message history for a session from the backend
+ * @param {string} sessionId
+ * @returns {Promise<Array<Object>>}
+ */
+export async function fetchSessionHistoryAPI(sessionId) {
+  try {
+    const res = await fetch(API_ENDPOINTS.HISTORY(sessionId));
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Fetch History Warning]:', err.message);
+  }
+  return [];
+}
+
+/**
+ * Fetches all past assessment sessions from the backend
+ * @returns {Promise<Array<{ id: string, title: string, createdAt: string, updatedAt: string }>>}
+ */
+export async function fetchSessionsAPI() {
+  try {
+    const res = await fetch(API_ENDPOINTS.SESSIONS);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[Fetch Sessions Warning]:', err.message);
+  }
+  return [];
+}

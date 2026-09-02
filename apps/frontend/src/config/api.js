@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
   DOCUMENTS: `${API_BASE_URL}/documents`,
   DOCUMENT_UPLOAD: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/documents`,
   DOCUMENT_STATUS: (documentId) => `${API_BASE_URL}/documents/status/${documentId}`,
-  HISTORY: (sessionId) => `${API_BASE_URL}/history/${sessionId}`,
+  HISTORY: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/history`,
 };
 
 export const DOCUMENT_CATEGORIES = [

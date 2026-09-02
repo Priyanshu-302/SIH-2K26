@@ -1,20 +1,33 @@
 import { create } from 'zustand';
 
 export const useChatStore = create((set, get) => ({
-  sessionId: null,
+  sessionId: typeof window !== 'undefined' ? localStorage.getItem('ayur_session_id') || null : null,
   messages: [],
   isStreaming: false,
   streamStatusText: '',
   selectedCitation: null,
 
-  setSessionId: (sessionId) => set({ sessionId }),
+  setSessionId: (sessionId) => {
+    if (typeof window !== 'undefined') {
+      if (sessionId) localStorage.setItem('ayur_session_id', sessionId);
+      else localStorage.removeItem('ayur_session_id');
+    }
+    set({ sessionId });
+  },
+
+  setMessages: (messages) => set({ messages: Array.isArray(messages) ? messages : [] }),
 
   setStreamingState: (isStreaming, statusText = '') =>
     set({ isStreaming, streamStatusText: statusText }),
 
   setSelectedCitation: (citation) => set({ selectedCitation: citation }),
 
-  clearSession: () => set({ sessionId: null, messages: [], selectedCitation: null }),
+  clearSession: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('ayur_session_id');
+    }
+    set({ sessionId: null, messages: [], selectedCitation: null });
+  },
 
   addUserMessage: (content) => {
     const userMsg = {

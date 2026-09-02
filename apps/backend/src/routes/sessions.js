@@ -15,6 +15,13 @@ const upload = multer({
 
 const router = Router();
 
+// GET /api/sessions - List all past sessions
+router.get(
+  '/',
+  authMiddleware,
+  sessionController.listSessions
+);
+
 // POST /api/sessions - Create session
 router.post(
   '/',

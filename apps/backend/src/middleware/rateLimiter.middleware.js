@@ -19,23 +19,24 @@ let sessionLimiterMiddleware = (req, res, next) => next();
 if (config.NODE_ENV !== 'test') {
   const redisClient = getRedisClient();
 
-  // 1. IP-Based Rate Limiter (5 requests per 2 minutes)
+  // 1. IP-Based Rate Limiter (30 requests per minute in dev, avoiding demo hiccups)
+  const isDev = config.NODE_ENV === 'development';
   ipLimiterMiddleware = rateLimit({
     store: new RedisStore({
       sendCommand: (...args) => redisClient.call(...args),
     }),
-    windowMs: 2 * 60 * 1000, // 2 minutes
-    max: 5,
+    windowMs: 60 * 1000, // 1 minute
+    max: isDev ? 30 : 10,
     handler: limitHandler,
   });
 
-  // 2. Session-Based Rate Limiter (3 requests per 2 minutes)
+  // 2. Session-Based Rate Limiter (30 requests per minute in dev)
   sessionLimiterMiddleware = rateLimit({
     store: new RedisStore({
       sendCommand: (...args) => redisClient.call(...args),
     }),
-    windowMs: 2 * 60 * 1000, // 2 minutes
-    max: 3,
+    windowMs: 60 * 1000, // 1 minute
+    max: isDev ? 30 : 10,
     keyGenerator: (req) => {
       // Falls back to IP if sessionId is not provided
       return req.body?.sessionId || req.ip;

@@ -5,7 +5,7 @@ import { useUIStore } from '../store/uiStore';
 import { uploadDocumentAPI, pollDocumentStatusAPI, fetchDocumentsAPI } from '../services/apiService';
 
 export function useDocumentUpload() {
-  const { sessionId } = useChatStore();
+  const { sessionId, setSessionId } = useChatStore();
   const { setDocuments, updateJobProgress, removeJob, setIsUploadModalOpen } = useDocumentStore();
   const { addToast } = useUIStore();
   const [isUploading, setIsUploading] = useState(false);
@@ -45,14 +45,22 @@ export function useDocumentUpload() {
 
   const uploadDocument = useCallback(
     async ({ file, category, title }) => {
-      if (!sessionId) {
-        addToast({ type: 'error', message: 'Active session required before uploading documents.' });
-        return;
+      let currentSessionId = sessionId;
+
+      if (!currentSessionId) {
+        try {
+          const sessionRes = await createSessionAPI();
+          currentSessionId = sessionRes.sessionId;
+          setSessionId(currentSessionId);
+        } catch (err) {
+          addToast({ type: 'error', message: `Could not start session for upload: ${err.message}` });
+          return;
+        }
       }
 
       setIsUploading(true);
       try {
-        const response = await uploadDocumentAPI(sessionId, file, category, title);
+        const response = await uploadDocumentAPI(currentSessionId, file, category, title);
         addToast({ type: 'info', message: `Document upload accepted (${file.name}). Ingestion in progress...` });
         setIsUploadModalOpen(false);
         startPolling(response.documentId, file.name);
@@ -62,7 +70,7 @@ export function useDocumentUpload() {
         setIsUploading(false);
       }
     },
-    [sessionId, addToast, setIsUploadModalOpen, startPolling]
+    [sessionId, setSessionId, addToast, setIsUploadModalOpen, startPolling]
   );
 
   return {

@@ -1,44 +1,86 @@
-import React, { useState } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, X, Clock, AlertCircle } from 'lucide-react';
 import { useSession } from '../../hooks/useSession';
+import { useChatStore } from '../../store/chatStore';
 import { useUIStore } from '../../store/uiStore';
+import { fetchSessionsAPI, fetchSessionHistoryAPI } from '../../services/apiService';
 import { SessionListItem } from './SessionListItem';
+
+function formatSessionDate(dateString) {
+  if (!dateString) return 'Recent';
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+
+    if (diffMins < 2) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return 'Recent';
+  }
+}
 
 export function HistorySidebar() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { sessionId, resetSession, isInitializing } = useSession();
+  const { setSessionId, setMessages } = useChatStore();
   const { closeSidebar } = useUIStore();
 
-  // Mock past historical sessions for UI richness
-  const [mockSessions] = useState([
-    {
-      id: 'sess-1',
-      title: 'Neem & Curcumin Synergy Study',
-      date: 'Today 10:24 AM',
-      active: true,
-    },
-    {
-      id: 'sess-2',
-      title: 'Tinospora Cordifolia Patentability',
-      date: 'Yesterday',
-      active: false,
-    },
-    {
-      id: 'sess-3',
-      title: 'Triphala Extraction Solvent Prior Art',
-      date: '24 Aug 2026',
-      active: false,
-    },
-    {
-      id: 'sess-4',
-      title: 'Ashwagandha Withanolide Patent Claims',
-      date: '20 Aug 2026',
-      active: false,
-    },
-  ]);
+  const loadSessions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const list = await fetchSessionsAPI();
+      if (Array.isArray(list)) {
+        setSessions(list);
+      }
+    } catch (err) {
+      console.warn('[Load Sessions Error]:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const filteredSessions = mockSessions.filter((s) =>
-    s.title.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions, sessionId]);
+
+  const handleSelectSession = async (targetSessionId) => {
+    if (targetSessionId === sessionId) {
+      closeSidebar();
+      return;
+    }
+
+    try {
+      const history = await fetchSessionHistoryAPI(targetSessionId);
+      setSessionId(targetSessionId);
+
+      if (Array.isArray(history)) {
+        const formatted = history.map((m) => ({
+          id: m._id || `msg-${Date.now()}`,
+          role: m.role,
+          content: m.content,
+          citations: m.citations || [],
+          timestamp: m.createdAt || new Date().toISOString(),
+        }));
+        setMessages(formatted);
+      } else {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('[Select Session Error]:', err);
+    } finally {
+      closeSidebar();
+    }
+  };
+
+  const filteredSessions = sessions.filter((s) =>
+    (s.title || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -82,18 +124,39 @@ export function HistorySidebar() {
 
       {/* History Items List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1 block">
-          Recent Prior Art Queries
-        </span>
+        <div className="flex items-center justify-between px-3 py-1 mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+            Recent Assessments ({filteredSessions.length})
+          </span>
+          <button
+            onClick={loadSessions}
+            className="text-[10px] text-ayur-700 hover:underline flex items-center gap-1 cursor-pointer"
+            title="Refresh history list"
+          >
+            <Clock className="w-3 h-3" />
+            <span>Refresh</span>
+          </button>
+        </div>
 
-        {filteredSessions.map((session) => (
-          <SessionListItem
-            key={session.id}
-            session={session}
-            isActive={session.active}
-            onSelect={() => closeSidebar()}
-          />
-        ))}
+        {filteredSessions.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs px-4">
+            <AlertCircle className="w-6 h-6 mx-auto mb-2 text-sage-300" />
+            <p>No matching assessment sessions found.</p>
+          </div>
+        ) : (
+          filteredSessions.map((session) => (
+            <SessionListItem
+              key={session.id}
+              session={{
+                id: session.id,
+                title: session.title || 'Untitled Assessment',
+                date: formatSessionDate(session.updatedAt || session.createdAt),
+              }}
+              isActive={session.id === sessionId}
+              onSelect={() => handleSelectSession(session.id)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

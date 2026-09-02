@@ -16,7 +16,8 @@ export async function classifierNode(state) {
 
     const model = new ChatGroq({
         apiKey: config.GROQ_API_KEY,
-        modelName: "llama-3.1-8b-instant",
+        model: "openai/gpt-oss-20b",
+        modelName: "openai/gpt-oss-20b",
         temperature: 0,
     }).withStructuredOutput(classificationSchema);
 

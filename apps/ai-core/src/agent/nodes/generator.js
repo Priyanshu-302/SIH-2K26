@@ -2,31 +2,41 @@ import { ChatGroq } from "@langchain/groq";
 import { config as appConfig } from "../../config/index.js";
 import { loadPromptTemplate } from "../../utils/prompts.js";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function generatorNode(state, config = {}) {
     const { query, retrievedDocuments = [], validatorFeedback = '', chatHistory = [] } = state;
     const onToken = config.configurable?.onToken;
 
     const template = loadPromptTemplate('generator.txt');
 
+    // Keep top 4 retrieved documents and trim each to 800 chars to respect Groq 8000 TPM budget
     const docsText = retrievedDocuments.length > 0
-        ? retrievedDocuments.map((doc, idx) => `---
+        ? retrievedDocuments.slice(0, 4).map((doc, idx) => {
+            const trimmedText = (doc.text || '').length > 800 ? doc.text.slice(0, 800) + '...' : (doc.text || '');
+            return `---
 Source ID: Doc ${idx + 1}
 Source Name: ${doc.source}
 Section: ${doc.section}
-Content: ${doc.text}
----`).join('\n\n')
+Content: ${trimmedText}
+---`;
+        }).join('\n\n')
         : 'No documents retrieved.';
 
+    // Keep only last 2 messages and truncate long assistant outputs to preserve tokens
     const historyText = Array.isArray(chatHistory) && chatHistory.length > 0
-        ? chatHistory.map(msg => {
+        ? chatHistory.slice(-2).map(msg => {
             const role = msg.role || msg.type || (msg._type === 'human' ? 'user' : 'assistant');
-            const content = msg.content || msg.text || '';
+            let content = msg.content || msg.text || '';
+            if (role === 'assistant' && content.length > 250) {
+                content = content.slice(0, 250) + '...';
+            }
             return `${role}: ${content}`;
         }).join('\n')
         : 'No conversation history.';
 
     const feedbackText = validatorFeedback
-        ? `\n⚠️ [CRITICAL CORRECTIONS REQUIRED FOR PREVIOUS HALLUCINATED CITATIONS]\nThe citation validator rejected the previous draft with the following feedback:\n${validatorFeedback}\n\nPlease rewrite the answer correcting the invalid citations above.`
+        ? `\n⚠️ [CRITICAL CORRECTIONS REQUIRED]\n${validatorFeedback}\nPlease rewrite the answer correcting the citations.`
         : '';
 
     const prompt = template
@@ -37,6 +47,7 @@ Content: ${doc.text}
 
     const model = new ChatGroq({
         apiKey: appConfig.GROQ_API_KEY,
+        model: appConfig.GROQ_MODEL_NAME,
         modelName: appConfig.GROQ_MODEL_NAME,
         temperature: 0.2,
     });
@@ -44,24 +55,37 @@ Content: ${doc.text}
     const messages = [{ role: 'user', content: prompt }];
     let completeResponse = '';
 
-    try {
-        if (typeof onToken === 'function') {
-            const stream = await model.stream(messages);
-            for await (const chunk of stream) {
-                const text = chunk.content || '';
-                completeResponse += text;
-                onToken(text);
-            }
-        } else {
-            const response = await model.invoke(messages);
-            completeResponse = response.content || '';
-        }
+    // Resilient retry loop with backoff if Groq TPM rate limit is hit
+    let attempts = 0;
+    const maxAttempts = 3;
 
-        return {
-            generation: completeResponse
-        };
-    } catch (err) {
-        console.error("Error in Generator Node execution:", err);
-        throw err;
+    while (attempts < maxAttempts) {
+        try {
+            attempts++;
+            if (typeof onToken === 'function') {
+                const stream = await model.stream(messages);
+                for await (const chunk of stream) {
+                    const text = chunk.content || '';
+                    completeResponse += text;
+                    onToken(text);
+                }
+            } else {
+                const response = await model.invoke(messages);
+                completeResponse = response.content || '';
+            }
+
+            return {
+                generation: completeResponse
+            };
+        } catch (err) {
+            const isRateLimit = err?.status === 429 || err?.message?.includes('Rate limit') || err?.code === 'rate_limit_exceeded';
+            if (isRateLimit && attempts < maxAttempts) {
+                console.warn(`[Groq TPM Backoff] Rate limit reached. Auto-waiting 3.5s before retry (attempt ${attempts}/${maxAttempts})...`);
+                await sleep(3500);
+                continue;
+            }
+            console.error("Error in Generator Node execution:", err);
+            throw err;
+        }
     }
 }

@@ -1,0 +1,14 @@
+You are an expert Indian Patent Office legal validator.
+Verify that the generated response is strictly grounded in the provided retrieved context documents and that all cited documents actually support the statements made.
+
+### RETRIEVED CONTEXT DOCUMENTS:
+{documents}
+
+### GENERATED RESPONSE:
+{generation}
+
+### INSTRUCTIONS:
+1. Check every citation tag (e.g. [Doc 1], [Doc 2]) in the generated response. Verify that the statement made is supported by the corresponding retrieved source document.
+2. If any citation references information not present in that specific document, flag it as a hallucination.
+3. Extract all valid, verified citations with docId, source, section, and a supporting snippet from the text.
+4. Set validationPassed to true if the citations are grounded.

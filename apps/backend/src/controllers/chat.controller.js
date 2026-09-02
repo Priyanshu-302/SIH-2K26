@@ -54,6 +54,14 @@ export const chatController = {
         content: query,
       });
 
+      // Update session title to reflect first query for history list
+      Session.findById(sessionId).then((sess) => {
+        if (sess && (!sess.title || sess.title.startsWith('New Assessment') || sess.title.startsWith('New Ayurvedic'))) {
+          sess.title = query.length > 55 ? query.slice(0, 52) + '...' : query;
+          sess.save().catch(() => {});
+        }
+      }).catch(() => {});
+
       // Invoke dynamic AI stream assessment
       const generator = await streamAssessment(query, {
         sessionId,

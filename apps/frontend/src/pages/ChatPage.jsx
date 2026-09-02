@@ -8,7 +8,7 @@ export default function ChatPage() {
   const { isSidebarOpen, isCitationPanelOpen, closeSidebar, closeCitationPanel } = useUIStore();
 
   return (
-    <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
+    <div className="flex-1 flex overflow-hidden relative w-full max-w-full h-full min-h-0">
       {/* Mobile Backdrop for History Sidebar */}
       {isSidebarOpen && (
         <div
@@ -20,7 +20,7 @@ export default function ChatPage() {
 
       {/* History Sidebar: Drawer on Mobile, Static Side-Panel on Desktop */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-white border-r border-sage-100 flex flex-col transition-transform duration-300 ease-in-out md:static md:w-72 md:translate-x-0 shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 sm:w-80 bg-white border-r border-sage-100 flex flex-col transition-transform duration-300 ease-in-out md:static md:w-72 md:translate-x-0 shrink-0 h-full min-h-0 ${
           isSidebarOpen ? 'translate-x-0 shadow-elevated md:shadow-none' : '-translate-x-full md:hidden'
         }`}
       >
@@ -28,7 +28,7 @@ export default function ChatPage() {
       </aside>
 
       {/* Center Chat Window - Takes 100% full width */}
-      <section className="flex-1 flex flex-col bg-alabaster-100 overflow-hidden w-full max-w-full min-w-0">
+      <section className="flex-1 flex flex-col bg-alabaster-100 overflow-hidden w-full max-w-full min-w-0 h-full min-h-0">
         <ChatWindow />
       </section>
 

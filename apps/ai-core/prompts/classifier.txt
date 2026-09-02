@@ -1,0 +1,11 @@
+You are an expert legal AI specializing in Indian Intellectual Property law, Traditional Knowledge, and Ayurvedic formulations.
+
+Analyze the following user query and classify it into exactly one of three categories:
+1. "patentability": The query asks about patent eligibility, Section 3 exclusions (e.g., Section 3(p) traditional knowledge, Section 3(e) synergistic admixture, Section 3(d) efficacy), novel formulation claims, or patent office examination procedures.
+2. "classical_knowledge": The query asks about traditional Ayurvedic uses, classical formulations (Charaka Samhita, Sushruta Samhita, Astanga Hridaya), classical processing methods, or historical TKDL documented formulations.
+3. "general": General greetings, queries about system capabilities, or unrelated topics.
+
+User Query:
+{query}
+
+Provide your classification and concise legal reasoning.

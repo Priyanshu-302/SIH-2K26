@@ -1,24 +1,65 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useChatStore } from '../../store/chatStore';
 import { useUIStore } from '../../store/uiStore';
+import { useDocumentStore } from '../../store/documentStore';
 import { useSession } from '../../hooks/useSession';
 import { MessageItem } from './MessageItem';
 import { ChatInput } from './ChatInput';
 import { StreamState } from './StreamState';
-import { PanelLeftClose, PanelLeft, Sparkles, BookOpen, PlusCircle, Scale } from 'lucide-react';
+import { Modal } from '../ui/Modal';
+import { FileDragDrop } from '../upload/FileDragDrop';
+import { PanelLeftClose, PanelLeft, Sparkles, BookOpen, PlusCircle, Scale, ArrowDown } from 'lucide-react';
 
 export function ChatWindow() {
   const { messages, isStreaming, streamStatusText } = useChatStore();
   const { isSidebarOpen, isCitationPanelOpen, toggleSidebar, toggleCitationPanel } = useUIStore();
+  const { isUploadModalOpen, setIsUploadModalOpen } = useDocumentStore();
   const { sessionId, isInitializing, resetSession } = useSession();
-  const messagesEndRef = useRef(null);
+  
+  const scrollContainerRef = useRef(null);
+  const shouldAutoScrollRef = useRef(true);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
+  // Monitor user scrolling to detect if they manually scrolled up to read
+  const handleScroll = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    
+    // If within 100px of bottom, stick to bottom
+    const isAtBottom = distanceFromBottom < 100;
+    shouldAutoScrollRef.current = isAtBottom;
+    setShowScrollBottom(!isAtBottom && scrollHeight > clientHeight);
+  }, []);
+
+  const scrollToBottom = useCallback((smooth = false) => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    shouldAutoScrollRef.current = true;
+    setShowScrollBottom(false);
+    if (smooth) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
+
+  // Frame-synced auto-scroll during streaming (avoids choppy smooth-scroll physics)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldAutoScrollRef.current || !scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const rafId = requestAnimationFrame(() => {
+      if (container && shouldAutoScrollRef.current) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [messages, isStreaming]);
 
   return (
-    <div className="flex-1 flex flex-col h-full relative w-full overflow-hidden">
+    <div className="flex-1 flex flex-col h-full relative w-full overflow-hidden min-h-0">
       {/* Top Session Sub-Header */}
       <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-md border-b border-sage-100 px-3 sm:px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
@@ -71,8 +112,12 @@ export function ChatWindow() {
         </div>
       </div>
 
-      {/* Messages Scroll View */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Messages Scroll View with 60fps performance scroll */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-0 relative scroll-smooth"
+      >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-3 sm:space-y-4 py-8 px-4">
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-ayur-100 flex items-center justify-center text-ayur-700 shadow-sm border border-ayur-200">
@@ -92,13 +137,34 @@ export function ChatWindow() {
         )}
 
         {isStreaming && <StreamState statusText={streamStatusText} />}
-        <div ref={messagesEndRef} />
       </div>
 
+      {/* Floating Scroll to Bottom Button if user scrolled up */}
+      {showScrollBottom && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20">
+          <button
+            onClick={() => scrollToBottom(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-ayur-800/90 hover:bg-ayur-900 text-white text-xs font-semibold shadow-elevated backdrop-blur-xs transition-all cursor-pointer hover:scale-105"
+          >
+            <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
+            <span>Latest response</span>
+          </button>
+        </div>
+      )}
+
       {/* Input Area with safe padding */}
-      <div className="p-2.5 sm:p-4 bg-white/95 backdrop-blur-md border-t border-sage-100 shrink-0">
+      <div className="p-2.5 sm:p-4 bg-white/95 backdrop-blur-md border-t border-sage-100 shrink-0 relative z-10">
         <ChatInput />
       </div>
+
+      {/* Upload Document Modal */}
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        title="Upload Patent Claim or Manuscript"
+      >
+        <FileDragDrop />
+      </Modal>
     </div>
   );
 }

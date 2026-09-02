@@ -12,9 +12,15 @@ export default function DashboardLayout() {
   const isChatPage = location.pathname.includes('/app/chat');
 
   return (
-    <div className="min-h-screen bg-alabaster-100 flex flex-col w-full max-w-full overflow-x-hidden">
+    <div
+      className={`bg-alabaster-100 flex flex-col w-full max-w-full ${
+        isChatPage
+          ? 'h-screen h-[100dvh] overflow-hidden'
+          : 'min-h-screen overflow-x-hidden'
+      }`}
+    >
       {/* Top Navigation Bar */}
-      <header className="h-14 sm:h-16 bg-white/95 backdrop-blur-md border-b border-sage-100 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm w-full max-w-full">
+      <header className="h-14 sm:h-16 bg-white/95 backdrop-blur-md border-b border-sage-100 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm w-full max-w-full shrink-0">
         {/* Left: Brand Logo & Title */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div 
@@ -126,7 +132,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden w-full max-w-full">
+      <main className="flex-1 flex flex-col overflow-hidden w-full max-w-full min-h-0">
         <Outlet />
       </main>
 

@@ -1,9 +1,10 @@
 import React from 'react';
 import { MessageSquare, ChevronRight } from 'lucide-react';
 
-export function SessionListItem({ session, isActive }) {
+export function SessionListItem({ session, isActive, onSelect }) {
   return (
     <div
+      onClick={onSelect}
       className={`p-3 rounded-xl flex items-center justify-between gap-2 cursor-pointer transition-all ${
         isActive
           ? 'bg-ayur-50 border border-ayur-200 text-ayur-900 shadow-sm'
