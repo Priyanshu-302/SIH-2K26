@@ -1,5 +1,21 @@
 import { API_ENDPOINTS } from '../config/api';
 
+/**
+ * Returns authorization headers containing current user JWT token if logged in
+ * @param {Object} [extraHeaders] 
+ * @returns {Object} Headers object
+ */
+export function getAuthHeaders(extraHeaders = {}) {
+  const headers = { ...extraHeaders };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('ayur_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 // In-memory mock store for offline preview mode
 let mockDocuments = [
   {
@@ -37,14 +53,108 @@ let mockDocuments = [
 ];
 
 /**
- * Creates a new chat session on the backend (with offline mock fallback)
+ * Request an email OTP verification code
+ * @param {string} email 
+ * @returns {Promise<{ success: boolean, message: string, simulated?: boolean }>}
+ */
+export async function sendOtpAPI(email) {
+  const res = await fetch(API_ENDPOINTS.AUTH_OTP_SEND, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.details || data.error || 'Failed to dispatch verification code');
+  }
+  return data;
+}
+
+/**
+ * Verify OTP and login user
+ * @param {string} email 
+ * @param {string} otp 
+ * @param {string} [name] 
+ * @param {string} [role] 
+ * @returns {Promise<{ success: boolean, token: string, user: Object }>}
+ */
+export async function verifyOtpAPI(email, otp, name, role) {
+  const res = await fetch(API_ENDPOINTS.AUTH_OTP_VERIFY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp, name, role }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.details || data.error || 'Verification failed');
+  }
+  return data;
+}
+
+/**
+ * Authenticate via Google OAuth
+ * @param {Object} payload { credential, email, name, avatar }
+ * @returns {Promise<{ success: boolean, token: string, user: Object }>}
+ */
+export async function googleAuthAPI(payload) {
+  const res = await fetch(API_ENDPOINTS.AUTH_GOOGLE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.details || data.error || 'Google login failed');
+  }
+  return data;
+}
+
+/**
+ * Fetch current authenticated user details from backend
+ * @returns {Promise<{ user: Object }>}
+ */
+export async function fetchCurrentUserAPI() {
+  const res = await fetch(API_ENDPOINTS.AUTH_ME, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to retrieve user profile');
+  }
+  return await res.json();
+}
+
+/**
+ * Updates current authenticated user profile
+ * @param {Object} data { name, role }
+ * @returns {Promise<{ success: boolean, user: Object }>}
+ */
+export async function updateProfileAPI(data) {
+  const res = await fetch(API_ENDPOINTS.AUTH_PROFILE, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body.details || body.error || 'Failed to update profile');
+  }
+  return body;
+}
+
+/**
+ * Creates a new chat session on the backend
  * @returns {Promise<{ sessionId: string }>}
  */
 export async function createSessionAPI() {
   try {
     const res = await fetch(API_ENDPOINTS.SESSIONS, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ title: 'New Ayurvedic IP Assessment' }),
     });
 
@@ -60,7 +170,7 @@ export async function createSessionAPI() {
 }
 
 /**
- * Uploads a document for ingestion (with offline mock fallback)
+ * Uploads a document for ingestion
  * @param {string} sessionId 
  * @param {File} file 
  * @param {string} category 
@@ -76,6 +186,7 @@ export async function uploadDocumentAPI(sessionId, file, category, title) {
 
     const res = await fetch(API_ENDPOINTS.DOCUMENT_UPLOAD(sessionId), {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData,
     });
 
@@ -86,7 +197,6 @@ export async function uploadDocumentAPI(sessionId, file, category, title) {
     console.info('[Ayur-IP Preview Mode] Backend offline, simulating ingestion pipeline.');
   }
 
-  // Fallback: add to mock document store and return mock documentId
   const documentId = '65b90f48f4384a6c8c4a' + Math.random().toString(16).slice(2, 6);
   mockDocuments.unshift({
     documentId,
@@ -102,19 +212,19 @@ export async function uploadDocumentAPI(sessionId, file, category, title) {
 }
 
 /**
- * Polls the status of an ingested document (with offline mock fallback)
+ * Polls the status of an ingested document
  * @param {string} documentId 
  * @returns {Promise<{ documentId: string, filename: string, status: string, progress: number, error: string|null }>}
  */
 export async function pollDocumentStatusAPI(documentId) {
   try {
-    const res = await fetch(API_ENDPOINTS.DOCUMENT_STATUS(documentId));
+    const res = await fetch(API_ENDPOINTS.DOCUMENT_STATUS(documentId), {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       return await res.json();
     }
-  } catch (err) {
-    // Offline simulation
-  }
+  } catch (err) {}
 
   return {
     documentId,
@@ -126,12 +236,14 @@ export async function pollDocumentStatusAPI(documentId) {
 }
 
 /**
- * Fetches list of ingested documents (with offline mock fallback)
+ * Fetches list of ingested documents
  * @returns {Promise<Array<{ documentId: string, filename: string, category: string, uploadedAt: string, chunkCount: number, status: string }>>}
  */
 export async function fetchDocumentsAPI() {
   try {
-    const res = await fetch(API_ENDPOINTS.DOCUMENTS);
+    const res = await fetch(API_ENDPOINTS.DOCUMENTS, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       return await res.json();
     }
@@ -149,7 +261,9 @@ export async function fetchDocumentsAPI() {
  */
 export async function fetchSessionHistoryAPI(sessionId) {
   try {
-    const res = await fetch(API_ENDPOINTS.HISTORY(sessionId));
+    const res = await fetch(API_ENDPOINTS.HISTORY(sessionId), {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       return await res.json();
     }
@@ -165,7 +279,9 @@ export async function fetchSessionHistoryAPI(sessionId) {
  */
 export async function fetchSessionsAPI() {
   try {
-    const res = await fetch(API_ENDPOINTS.SESSIONS);
+    const res = await fetch(API_ENDPOINTS.SESSIONS, {
+      headers: getAuthHeaders(),
+    });
     if (res.ok) {
       return await res.json();
     }

@@ -48,17 +48,15 @@ export function HistorySidebar() {
 
   useEffect(() => {
     loadSessions();
+    const handleRefresh = () => loadSessions();
+    window.addEventListener('refresh_sessions', handleRefresh);
+    return () => window.removeEventListener('refresh_sessions', handleRefresh);
   }, [loadSessions, sessionId]);
 
   const handleSelectSession = async (targetSessionId) => {
-    if (targetSessionId === sessionId) {
-      closeSidebar();
-      return;
-    }
-
     try {
-      const history = await fetchSessionHistoryAPI(targetSessionId);
       setSessionId(targetSessionId);
+      const history = await fetchSessionHistoryAPI(targetSessionId);
 
       if (Array.isArray(history)) {
         const formatted = history.map((m) => ({

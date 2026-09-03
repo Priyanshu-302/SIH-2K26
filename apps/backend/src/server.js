@@ -16,14 +16,18 @@ async function startServer() {
     await mongoose.connect(config.MONGODB_URI);
     logger.info('Successfully connected to MongoDB');
 
-    // 2. Initialize Redis connection
-    logger.info('Connecting to Redis instance...');
-    const redisClient = getRedisClient();
-    await redisClient.ping(); // Verify connection works
-    logger.info('Successfully verified Redis connection');
+    // 2. Initialize Redis connection if available
+    try {
+      logger.info('Connecting to Redis instance...');
+      const redisClient = getRedisClient();
+      await redisClient.ping();
+      logger.info('Successfully verified Redis connection');
 
-    // 3. Start BullMQ Ingestion Worker
-    startIngestionWorker();
+      // 3. Start BullMQ Ingestion Worker
+      startIngestionWorker();
+    } catch (redisErr) {
+      logger.warn('Redis is offline. In-memory stores will be used for OTP and rate limits.');
+    }
 
     // 4. Start Express server listener
     server = app.listen(config.PORT, () => {

@@ -6,6 +6,7 @@ import { validate } from '../middleware/validator.middleware.js';
 import { createSessionSchema } from '../schemas/session.schema.js';
 import { documentUploadSchema } from '../schemas/document.schema.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { requireAdmin } from '../middleware/admin.middleware.js';
 
 // Configure Multer for local drafts storing (Max: 15MB)
 const upload = multer({
@@ -30,10 +31,11 @@ router.post(
   sessionController.createSession
 );
 
-// POST /api/sessions/:sessionId/documents - Upload document to session
+// POST /api/sessions/:sessionId/documents - Upload document to session (Admin Only)
 router.post(
   '/:sessionId/documents',
   authMiddleware,
+  requireAdmin,
   upload.single('file'),
   validate(documentUploadSchema),
   documentController.uploadDocument

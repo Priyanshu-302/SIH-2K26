@@ -6,6 +6,12 @@ const SessionSchema = new mongoose.Schema({
     required: true,
     default: 'New Assessment',
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+    index: true,
+  },
 }, {
   timestamps: true,
 });

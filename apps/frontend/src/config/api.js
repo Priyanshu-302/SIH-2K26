@@ -7,6 +7,11 @@ export const API_ENDPOINTS = {
   DOCUMENT_UPLOAD: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/documents`,
   DOCUMENT_STATUS: (documentId) => `${API_BASE_URL}/documents/status/${documentId}`,
   HISTORY: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/history`,
+  AUTH_OTP_SEND: `${API_BASE_URL}/auth/otp/send`,
+  AUTH_OTP_VERIFY: `${API_BASE_URL}/auth/otp/verify`,
+  AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
+  AUTH_ME: `${API_BASE_URL}/auth/me`,
+  AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
 };
 
 export const DOCUMENT_CATEGORIES = [

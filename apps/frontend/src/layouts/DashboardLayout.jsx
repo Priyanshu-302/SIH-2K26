@@ -1,13 +1,33 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, UploadCloud, Leaf, Home, UserCheck } from 'lucide-react';
+import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
+import { useAuthStore } from '../store/authStore';
 import { Footer } from '../components/common/Footer';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toasts, removeToast } = useUIStore();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = () => {
+    if (user?.name) {
+      const clean = user.name.replace(/^(dr\.?|prof\.?|mr\.?|mrs\.?|ms\.?)\s+/i, '').trim();
+      const parts = clean.split(/\s+/);
+      if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      return clean.slice(0, 2).toUpperCase();
+    }
+    if (user?.email) return user.email.slice(0, 2).toUpperCase();
+    return 'AR';
+  };
+
+  const initials = getInitials();
 
   const isChatPage = location.pathname.includes('/app/chat');
 
@@ -54,20 +74,22 @@ export default function DashboardLayout() {
             <span className="hidden sm:inline">Workspace</span>
           </NavLink>
 
-          <NavLink
-            to="/app/admin"
-            title="Ingestion Console"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                isActive
-                  ? 'bg-white text-ayur-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`
-            }
-          >
-            <UploadCloud className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Ingestion</span>
-          </NavLink>
+          {user?.role === 'admin' && (
+            <NavLink
+              to="/app/admin"
+              title="Admin Ingestion Console"
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  isActive
+                    ? 'bg-white text-ayur-800 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`
+              }
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ingest Datasets</span>
+            </NavLink>
+          )}
 
           <NavLink
             to="/app/profile"
@@ -101,13 +123,26 @@ export default function DashboardLayout() {
             className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-sage-200 cursor-pointer group"
           >
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-ayur-700 group-hover:bg-ayur-800 text-white flex items-center justify-center text-xs font-bold shadow-sm transition-colors shrink-0">
-              AS
+              {initials}
             </div>
-            <div className="hidden lg:block text-left">
-              <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-ayur-700 transition-colors">Dr. A. Sharma</p>
-              <p className="text-[9px] text-slate-500">Patent Examiner</p>
+            <div className="hidden lg:block text-left max-w-[120px]">
+              <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-ayur-700 transition-colors truncate">
+                {user?.name || user?.email?.split('@')[0] || 'Researcher'}
+              </p>
+              <p className="text-[9px] text-slate-500 capitalize">{user?.role || 'Examiner'}</p>
             </div>
           </div>
+
+          {/* Logout Action Button */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sign out of Ayur-IP"
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer ml-1"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-[11px] font-semibold">Sign out</span>
+          </button>
         </div>
       </header>
 

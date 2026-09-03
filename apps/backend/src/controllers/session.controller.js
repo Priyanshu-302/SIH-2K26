@@ -15,8 +15,11 @@ export const sessionController = {
     try {
       const title = req.body?.title || 'New Assessment';
       
-      logger.info({ correlationId, title }, 'Creating new assessment session');
-      const session = new Session({ title });
+      logger.info({ correlationId, title, userId: req.user?.id }, 'Creating new assessment session');
+      const session = new Session({
+        title,
+        userId: req.user?.id || undefined,
+      });
       await session.save();
       
       logger.info({ correlationId, sessionId: session._id }, 'Assessment session created successfully');
@@ -27,17 +30,22 @@ export const sessionController = {
   },
 
   /**
-   * Retrieves list of active past sessions that have messages
+   * Retrieves list of active past sessions belonging to authenticated user
    */
   async listSessions(req, res, next) {
     try {
-      const activeSessionIds = await Message.distinct('sessionId');
+      const filter = {};
 
-      const sessions = await Session.find({
-        _id: { $in: activeSessionIds }
-      })
+      if (req.user?.id) {
+        filter.$or = [
+          { userId: req.user.id },
+          { userId: { $exists: false } },
+        ];
+      }
+
+      const sessions = await Session.find(filter)
         .sort({ updatedAt: -1, createdAt: -1 })
-        .limit(30)
+        .limit(50)
         .lean();
 
       const formatted = sessions.map((s) => ({

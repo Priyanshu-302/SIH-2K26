@@ -78,6 +78,7 @@ export function useChatStream() {
 
               case 'done':
                 finishStreaming();
+                window.dispatchEvent(new Event('refresh_sessions'));
                 break;
 
               default:

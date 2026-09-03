@@ -8,9 +8,11 @@ import { Button } from '../components/ui/Button';
 import { Footer } from '../components/common/Footer';
 import { BotanicalScales3D } from '../components/common/BotanicalScales3D';
 import { FloatingBackground } from '../components/common/FloatingBackground';
+import { useAuthStore } from '../store/authStore';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Interactive TKDL explorer state
@@ -110,22 +112,34 @@ export default function LandingPage() {
 
         {/* Desktop Actions */}
         <div className="hidden sm:flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/app/profile')}
-            className="hover:border-ayur-400 transition-colors"
-          >
-            <UserCheck className="w-3.5 h-3.5 mr-1.5 text-ayur-700" />
-            <span>Examiner</span>
-          </Button>
+          {!isAuthenticated ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/login')}
+              className="hover:border-ayur-400 transition-colors"
+            >
+              <UserCheck className="w-3.5 h-3.5 mr-1.5 text-ayur-700" />
+              <span>Sign In</span>
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/app/profile')}
+              className="hover:border-ayur-400 transition-colors"
+            >
+              <UserCheck className="w-3.5 h-3.5 mr-1.5 text-ayur-700" />
+              <span>Examiner Profile</span>
+            </Button>
+          )}
 
           <Button 
             size="sm"
             className="bg-ayur-700 hover:bg-ayur-800 text-white shadow-soft-card"
-            onClick={() => navigate('/app/chat')}
+            onClick={() => navigate(isAuthenticated ? '/app/chat' : '/login?redirect=/app/chat')}
           >
-            <span>Launch Workspace</span>
+            <span>{isAuthenticated ? 'Launch Workspace' : 'Get Started'}</span>
             <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>

@@ -1,6 +1,4 @@
 import { rateLimit } from 'express-rate-limit';
-import { RedisStore } from 'rate-limit-redis';
-import { getRedisClient } from '../config/redis.js';
 import config from '../config/index.js';
 
 // Reusable standard rate limit error handler
@@ -12,39 +10,23 @@ const limitHandler = (req, res) => {
   });
 };
 
-let ipLimiterMiddleware = (req, res, next) => next();
-let sessionLimiterMiddleware = (req, res, next) => next();
+const isDev = config.NODE_ENV === 'development';
 
-// In non-test environments, initialize full Redis-backed rate limiters
-if (config.NODE_ENV !== 'test') {
-  const redisClient = getRedisClient();
+// 1. IP-Based Rate Limiter (30 requests per minute in dev)
+export const ipRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isDev ? 30 : 10,
+  handler: limitHandler,
+});
 
-  // 1. IP-Based Rate Limiter (30 requests per minute in dev, avoiding demo hiccups)
-  const isDev = config.NODE_ENV === 'development';
-  ipLimiterMiddleware = rateLimit({
-    store: new RedisStore({
-      sendCommand: (...args) => redisClient.call(...args),
-    }),
-    windowMs: 60 * 1000, // 1 minute
-    max: isDev ? 30 : 10,
-    handler: limitHandler,
-  });
+// 2. Session-Based Rate Limiter (30 requests per minute in dev)
+export const sessionRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isDev ? 30 : 10,
+  keyGenerator: (req) => {
+    return req.body?.sessionId || req.ip;
+  },
+  handler: limitHandler,
+});
 
-  // 2. Session-Based Rate Limiter (30 requests per minute in dev)
-  sessionLimiterMiddleware = rateLimit({
-    store: new RedisStore({
-      sendCommand: (...args) => redisClient.call(...args),
-    }),
-    windowMs: 60 * 1000, // 1 minute
-    max: isDev ? 30 : 10,
-    keyGenerator: (req) => {
-      // Falls back to IP if sessionId is not provided
-      return req.body?.sessionId || req.ip;
-    },
-    handler: limitHandler,
-  });
-}
-
-export const ipRateLimiter = ipLimiterMiddleware;
-export const sessionRateLimiter = sessionLimiterMiddleware;
 export const chatRateLimiter = [ipRateLimiter, sessionRateLimiter];

@@ -2,8 +2,11 @@ import React, { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import PageLoader from '../components/common/PageLoader';
+import { ProtectedRoute } from './ProtectedRoute';
+import { AdminRoute } from './AdminRoute';
 
 const LandingPage = React.lazy(() => import('../pages/LandingPage'));
+const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 const ChatPage = React.lazy(() => import('../pages/ChatPage'));
 const AdminUploadPage = React.lazy(() => import('../pages/AdminUploadPage'));
 const ProfilePage = React.lazy(() => import('../pages/ProfilePage'));
@@ -19,8 +22,20 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/login',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
     path: '/app',
-    element: <DashboardLayout />,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: 'chat',
@@ -41,9 +56,11 @@ export const router = createBrowserRouter([
       {
         path: 'admin',
         element: (
-          <Suspense fallback={<PageLoader />}>
-            <AdminUploadPage />
-          </Suspense>
+          <AdminRoute>
+            <Suspense fallback={<PageLoader />}>
+              <AdminUploadPage />
+            </Suspense>
+          </AdminRoute>
         ),
       },
       {

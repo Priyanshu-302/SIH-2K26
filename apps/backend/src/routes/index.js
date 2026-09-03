@@ -4,9 +4,11 @@ import chatRouter from './chat.js';
 import documentsRouter from './documents.js';
 import historyRouter from './history.js';
 import healthRouter from './health.js';
+import authRouter from './auth.js';
 
 const router = Router();
 
+router.use('/auth', authRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/sessions', historyRouter); // Mounts /sessions/:sessionId/history
 router.use('/chat', chatRouter);

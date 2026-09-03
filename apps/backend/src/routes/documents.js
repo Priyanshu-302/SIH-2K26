@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { documentController } from '../controllers/document.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { requireAdmin } from '../middleware/admin.middleware.js';
 
 const router = Router();
 
-// GET listings of uploaded files metadata
+// GET listings of uploaded files metadata (Admin only)
 router.get(
   '/',
   authMiddleware,
+  requireAdmin,
   documentController.listDocuments
 );
 

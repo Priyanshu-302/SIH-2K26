@@ -16,6 +16,11 @@ const envSchema = z.object({
   }, z.boolean().default(true)),
   GROQ_API_KEY: z.string().optional(),
   QDRANT_URL: z.string().url().default('http://localhost:6333'),
+  JWT_SECRET: z.string().default('ayur_ip_jwt_secure_secret_2026'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+  BREVO_API_KEY: z.string().optional(),
+  BREVO_SENDER_EMAIL: z.string().default('no-reply@ayur-ip.gov.in'),
+  BREVO_SENDER_NAME: z.string().default('Ayur-IP Intelligence'),
 });
 
 const parseEnv = () => {

@@ -11,6 +11,9 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
+        ...(typeof window !== 'undefined' && localStorage.getItem('ayur_token')
+          ? { Authorization: `Bearer ${localStorage.getItem('ayur_token')}` }
+          : {}),
       },
       body: JSON.stringify({
         query,
@@ -42,6 +45,9 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
               if (jsonStr) {
                 try {
                   const eventPayload = JSON.parse(jsonStr);
+                  if (eventPayload.type === 'session' && eventPayload.sessionId) {
+                    localStorage.setItem('ayur_session_id', eventPayload.sessionId);
+                  }
                   onEvent(eventPayload);
                 } catch (err) {
                   console.warn('[SSE Stream] Parse error:', err);
@@ -52,13 +58,21 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
         }
       }
       return;
+    } else {
+      let errorMsg = `Server error (${response.status})`;
+      try {
+        const errJson = await response.json();
+        errorMsg = errJson.details || errJson.error || errorMsg;
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
   } catch (err) {
     if (err.name === 'AbortError') {
       onEvent({ type: 'error', message: 'Stream aborted by user.' });
       return;
     }
-    console.info('[Ayur-IP Preview Mode] Backend offline, streaming interactive mock legal analysis.');
+    // Propagate real server errors to the caller
+    throw err;
   }
 
   // --- Offline Interactive Simulation ---
