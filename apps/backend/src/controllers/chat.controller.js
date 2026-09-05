@@ -2,6 +2,7 @@ import { streamAssessment } from '../adapters/ai.adapter.js';
 import { Session } from '../models/session.model.js';
 import { historyService } from '../services/history.service.js';
 import { getRedisClient, isRedisConnected } from '../config/redis.js';
+import config from '../config/index.js';
 import logger from '../config/logger.js';
 
 function normalizeQuery(q) {
@@ -116,11 +117,31 @@ export const chatController = {
       }
 
       if (cachedPayload && cachedPayload.text) {
-        logger.info({ correlationId, cacheKey }, 'Redis RAG cache HIT - serving without LLM invocation');
+        logger.info({ correlationId, cacheKey }, 'Redis RAG cache HIT - serving with natural streaming cadence');
 
-        const words = cachedPayload.text.match(/\S+\s*/g) || [cachedPayload.text];
-        for (const word of words) {
-          writeEvent({ type: 'token', data: word });
+        const isTestEnv = config.NODE_ENV === 'test';
+
+        // 1. Natural thinking pause (~450ms) so user sees active reasoning state
+        if (!isTestEnv) {
+          await new Promise((resolve) => setTimeout(resolve, 450));
+        }
+
+        // 2. Chunk words into small natural token clusters (2-3 words per packet)
+        const rawWords = cachedPayload.text.match(/\S+\s*/g) || [cachedPayload.text];
+        const tokenChunks = [];
+        for (let i = 0; i < rawWords.length; i += 2) {
+          tokenChunks.push(rawWords.slice(i, i + 2).join(''));
+        }
+
+        logger.debug({ correlationId, tokenChunksCount: tokenChunks.length }, 'Streaming cached tokens with natural cadence');
+
+        // 3. Stream token chunks smoothly at realistic typing cadence (~15ms per chunk)
+        for (let i = 0; i < tokenChunks.length; i++) {
+          if (res.writableEnded) break;
+          writeEvent({ type: 'token', data: tokenChunks[i] });
+          if (!isTestEnv) {
+            await new Promise((resolve) => setTimeout(resolve, 15));
+          }
         }
 
         if (cachedPayload.citations?.length) {
