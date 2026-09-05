@@ -150,12 +150,12 @@ export async function updateProfileAPI(data) {
  * Creates a new chat session on the backend
  * @returns {Promise<{ sessionId: string }>}
  */
-export async function createSessionAPI() {
+export async function createSessionAPI(title = 'New Ayurvedic IP Assessment') {
   try {
     const res = await fetch(API_ENDPOINTS.SESSIONS, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ title: 'New Ayurvedic IP Assessment' }),
+      body: JSON.stringify({ title }),
     });
 
     if (res.ok) {
@@ -290,3 +290,42 @@ export async function fetchSessionsAPI() {
   }
   return [];
 }
+
+/**
+ * Renames a session title on the backend
+ * @param {string} sessionId
+ * @param {string} title
+ * @returns {Promise<{ id: string, title: string, updatedAt: string }>}
+ */
+export async function renameSessionAPI(sessionId, title) {
+  const res = await fetch(API_ENDPOINTS.SESSION_DETAIL(sessionId), {
+    method: 'PATCH',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ title }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.details || data.error || 'Failed to rename assessment session');
+  }
+  return data;
+}
+
+/**
+ * Deletes a session and its associated messages
+ * @param {string} sessionId
+ * @returns {Promise<{ success: boolean }>}
+ */
+export async function deleteSessionAPI(sessionId) {
+  const res = await fetch(API_ENDPOINTS.SESSION_DETAIL(sessionId), {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.details || data.error || 'Failed to delete assessment session');
+  }
+  return data;
+}
+

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useChatStore } from './chatStore';
 
 function getStoredToken() {
   if (typeof window === 'undefined') return null;
@@ -24,12 +25,18 @@ export const useAuthStore = create((set) => ({
     if (typeof window !== 'undefined') {
       localStorage.setItem('ayur_token', token);
       localStorage.setItem('ayur_user', JSON.stringify(user));
+      localStorage.removeItem('ayur_session_id');
     }
+    // Isolate account boundary: clear active chat and session messages from previous account
+    useChatStore.getState().clearSession();
     set({
       token,
       user,
       isAuthenticated: true,
     });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('refresh_sessions'));
+    }
   },
 
   logout: () => {
@@ -38,12 +45,18 @@ export const useAuthStore = create((set) => ({
       localStorage.removeItem('ayur_user');
       localStorage.removeItem('ayur_session_id');
     }
+    // Wipe active chat state
+    useChatStore.getState().clearSession();
     set({
       token: null,
       user: null,
       isAuthenticated: false,
     });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('refresh_sessions'));
+    }
   },
+
 
   updateUser: (updates) => {
     set((state) => {

@@ -1,7 +1,12 @@
 import { streamAssessment } from '../adapters/ai.adapter.js';
 import { Session } from '../models/session.model.js';
 import { historyService } from '../services/history.service.js';
+import { getRedisClient, isRedisConnected } from '../config/redis.js';
 import logger from '../config/logger.js';
+
+function normalizeQuery(q) {
+  return (q || '').toLowerCase().replace(/[^\w\s]/g, '').trim().replace(/\s+/g, ' ');
+}
 
 export const chatController = {
   /**
@@ -16,20 +21,37 @@ export const chatController = {
     const { query, sessionId, historyOverride } = req.body;
 
     try {
-      // 1. Verify or auto-create session for self-healing persistence
+      // 1. Verify session or reject if non-existent
       let session = null;
       if (sessionId && sessionId.match(/^[0-9a-fA-F]{24}$/)) {
         session = await Session.findById(sessionId);
       }
 
+      if (sessionId && !session) {
+        return res.status(400).json({
+          error: 'Invalid Session',
+          code: 'SESSION_INVALID',
+          details: 'The specified session ID does not exist.'
+        });
+      }
+
       if (!session) {
-        logger.info({ correlationId, requestedSessionId: sessionId }, 'Session missing or invalid, creating fresh session');
+        logger.info({ correlationId, requestedSessionId: sessionId }, 'Session missing or omitted, creating fresh session');
         session = new Session({
           title: query.length > 55 ? query.slice(0, 52) + '...' : query,
           userId: req.user?.id || undefined,
         });
         await session.save();
       } else {
+        // Enforce session ownership isolation
+        if (session.userId && req.user?.id && session.userId.toString() !== req.user.id.toString()) {
+          return res.status(403).json({
+            error: 'Access Denied',
+            code: 'FORBIDDEN',
+            details: 'You do not have permission to post to this session.'
+          });
+        }
+
         // Associate user and title if needed
         let updated = false;
         if (!session.userId && req.user?.id) {
@@ -76,45 +98,95 @@ export const chatController = {
         content: query,
       });
 
-      // Invoke dynamic AI stream assessment
-      const generator = await streamAssessment(query, {
-        sessionId: activeSessionId,
-        history: chatHistory,
-      });
+      // Check Redis query cache (0 token cost for repeated questions)
+      const normalized = normalizeQuery(query);
+      const cacheKey = `rag:cache:${normalized}`;
+      let cachedPayload = null;
 
-      for await (const event of generator) {
-        // Handle stream errors
-        if (event.type === 'error') {
-          writeEvent({ type: 'error', message: event.message });
-          terminalSent = true;
-          break;
+      try {
+        const redis = getRedisClient();
+        if (isRedisConnected()) {
+          const cachedStr = await redis.get(cacheKey);
+          if (cachedStr) {
+            cachedPayload = JSON.parse(cachedStr);
+          }
         }
-
-        // Handle natural generator done token
-        if (event.type === 'done') {
-          writeEvent({ type: 'done' });
-          terminalSent = true;
-          break;
-        }
-
-        // Accumulate output response data for database logging
-        if (event.type === 'token') {
-          generatedText += event.data;
-        } else if (event.type === 'citations') {
-          collectedCitations = collectedCitations.concat(event.data);
-        }
-
-        // Write stream events and check backpressure
-        const ok = writeEvent(event);
-        if (!ok) {
-          await new Promise((resolve) => res.once('drain', resolve));
-        }
+      } catch (cacheErr) {
+        logger.debug({ correlationId, err: cacheErr.message }, 'Redis cache read skipped');
       }
 
-      // Write default terminal token if none was explicitly written
-      if (!terminalSent) {
+      if (cachedPayload && cachedPayload.text) {
+        logger.info({ correlationId, cacheKey }, 'Redis RAG cache HIT - serving without LLM invocation');
+
+        const words = cachedPayload.text.match(/\S+\s*/g) || [cachedPayload.text];
+        for (const word of words) {
+          writeEvent({ type: 'token', data: word });
+        }
+
+        if (cachedPayload.citations?.length) {
+          writeEvent({ type: 'citations', data: cachedPayload.citations });
+        }
         writeEvent({ type: 'done' });
+        terminalSent = true;
+        generatedText = cachedPayload.text;
+        collectedCitations = cachedPayload.citations || [];
+      } else {
+        // Cache miss: Invoke dynamic AI stream assessment
+        const generator = await streamAssessment(query, {
+          sessionId: activeSessionId,
+          history: chatHistory,
+        });
+
+        for await (const event of generator) {
+          // Handle stream errors
+          if (event.type === 'error') {
+            writeEvent({ type: 'error', message: event.message });
+            terminalSent = true;
+            break;
+          }
+
+          // Handle natural generator done token
+          if (event.type === 'done') {
+            writeEvent({ type: 'done' });
+            terminalSent = true;
+            break;
+          }
+
+          // Accumulate output response data for database logging
+          if (event.type === 'token') {
+            generatedText += event.data;
+          } else if (event.type === 'citations') {
+            collectedCitations = collectedCitations.concat(event.data);
+          }
+
+          // Write stream events and check backpressure
+          const ok = writeEvent(event);
+          if (!ok) {
+            await new Promise((resolve) => res.once('drain', resolve));
+          }
+        }
+
+        if (!terminalSent) {
+          writeEvent({ type: 'done' });
+        }
+
+        // Cache completed output in Redis with 24-hour TTL (86400s)
+        if (generatedText && generatedText.length > 50) {
+          try {
+            const redis = getRedisClient();
+            if (isRedisConnected()) {
+              await redis.setex(cacheKey, 86400, JSON.stringify({
+                text: generatedText,
+                citations: collectedCitations,
+              }));
+              logger.debug({ correlationId, cacheKey }, 'Cached LLM assessment in Redis (24h TTL)');
+            }
+          } catch (e) {
+            logger.debug({ correlationId, err: e.message }, 'Redis cache write skipped');
+          }
+        }
       }
+
 
       // 5. Persist assistant output to history database
       if (generatedText) {

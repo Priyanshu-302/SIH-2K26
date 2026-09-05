@@ -8,16 +8,34 @@ const classificationSchema = z.object({
     reasoning: z.string()
 });
 
-export async function classifierNode(state) {
-    const { query } = state;
+const PATENT_KEYWORDS = /\b(patent|patentable|patentability|section\s*3|prior\s*art|claims?|infringe|synerg|biological\s*diversity|nba)\b/i;
+const CLASSICAL_KEYWORDS = /\b(charaka|sushruta|samhita|tkdl|classical|rasayana|bhasma|shloka|ayurvedic\s*formulation)\b/i;
 
+export async function classifierNode(state) {
+    const { query = '' } = state;
+
+    // Fast-path 1: Zero-token regex triage for unambiguous queries
+    if (PATENT_KEYWORDS.test(query)) {
+        return {
+            classification: "patentability",
+            classificationReasoning: "Zero-token rule match: Query contains patent legal keywords."
+        };
+    }
+    if (CLASSICAL_KEYWORDS.test(query)) {
+        return {
+            classification: "classical_knowledge",
+            classificationReasoning: "Zero-token rule match: Query contains classical Ayurvedic keywords."
+        };
+    }
+
+    // Fallback: Ultra-lightweight, high-speed LLM classifier (llama-3.1-8b-instant)
     const template = loadPromptTemplate('classifier.txt');
     const formattedPrompt = template.replace('{query}', query);
 
     const model = new ChatGroq({
         apiKey: config.GROQ_API_KEY,
-        model: "openai/gpt-oss-20b",
-        modelName: "openai/gpt-oss-20b",
+        model: "llama-3.1-8b-instant",
+        modelName: "llama-3.1-8b-instant",
         temperature: 0,
     }).withStructuredOutput(classificationSchema);
 
@@ -38,3 +56,4 @@ export async function classifierNode(state) {
         };
     }
 }
+

@@ -26,6 +26,15 @@ export const historyController = {
         });
       }
 
+      // Check ownership: ensure user can only view history for their own sessions
+      if (session.userId && req.user?.id && session.userId.toString() !== req.user.id) {
+        return res.status(403).json({
+          error: 'Access Denied',
+          code: 'FORBIDDEN',
+          details: 'You do not have permission to access the message history of this session.',
+        });
+      }
+
       // 2. Fetch paginated logs
       const messages = await historyService.getMessagesBySessionId(sessionId, limit, offset);
       

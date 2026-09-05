@@ -3,7 +3,12 @@ import { Search, Plus, X, Clock, AlertCircle } from 'lucide-react';
 import { useSession } from '../../hooks/useSession';
 import { useChatStore } from '../../store/chatStore';
 import { useUIStore } from '../../store/uiStore';
-import { fetchSessionsAPI, fetchSessionHistoryAPI } from '../../services/apiService';
+import {
+  fetchSessionsAPI,
+  fetchSessionHistoryAPI,
+  renameSessionAPI,
+  deleteSessionAPI,
+} from '../../services/apiService';
 import { SessionListItem } from './SessionListItem';
 
 function formatSessionDate(dateString) {
@@ -30,7 +35,7 @@ export function HistorySidebar() {
   const [isLoading, setIsLoading] = useState(false);
   const { sessionId, resetSession, isInitializing } = useSession();
   const { setSessionId, setMessages } = useChatStore();
-  const { closeSidebar } = useUIStore();
+  const { closeSidebar, addToast } = useUIStore();
 
   const loadSessions = useCallback(async () => {
     setIsLoading(true);
@@ -51,7 +56,7 @@ export function HistorySidebar() {
     const handleRefresh = () => loadSessions();
     window.addEventListener('refresh_sessions', handleRefresh);
     return () => window.removeEventListener('refresh_sessions', handleRefresh);
-  }, [loadSessions, sessionId]);
+  }, [loadSessions]);
 
   const handleSelectSession = async (targetSessionId) => {
     try {
@@ -73,7 +78,55 @@ export function HistorySidebar() {
     } catch (err) {
       console.error('[Select Session Error]:', err);
     } finally {
-      closeSidebar();
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        closeSidebar();
+      }
+    }
+  };
+
+  const handleRenameSession = async (targetSessionId, newTitle) => {
+    try {
+      setSessions((prev) =>
+        prev.map((s) => (s.id === targetSessionId ? { ...s, title: newTitle } : s))
+      );
+
+      const res = await renameSessionAPI(targetSessionId, newTitle);
+      addToast({ type: 'success', message: 'Assessment renamed' });
+
+      if (res && res.title) {
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === targetSessionId
+              ? { ...s, title: res.title, updatedAt: res.updatedAt }
+              : s
+          )
+        );
+      }
+    } catch (err) {
+      addToast({ type: 'error', message: err.message || 'Failed to rename assessment' });
+      loadSessions();
+    }
+  };
+
+  const handleDeleteSession = async (targetSessionId) => {
+    try {
+      const isActiveSession = sessionId === targetSessionId;
+      const remainingSessions = sessions.filter((s) => s.id !== targetSessionId);
+
+      setSessions(remainingSessions);
+      await deleteSessionAPI(targetSessionId);
+      addToast({ type: 'success', message: 'Assessment deleted' });
+
+      if (isActiveSession) {
+        if (remainingSessions.length > 0) {
+          handleSelectSession(remainingSessions[0].id);
+        } else {
+          resetSession();
+        }
+      }
+    } catch (err) {
+      addToast({ type: 'error', message: err.message || 'Failed to delete assessment' });
+      loadSessions();
     }
   };
 
@@ -99,7 +152,9 @@ export function HistorySidebar() {
         <button
           onClick={() => {
             resetSession();
-            closeSidebar();
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              closeSidebar();
+            }
           }}
           disabled={isInitializing}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ayur-700 hover:bg-ayur-800 text-white text-xs font-semibold shadow-soft-card transition-all cursor-pointer"
@@ -107,6 +162,7 @@ export function HistorySidebar() {
           <Plus className="w-4 h-4" />
           <span>New Assessment</span>
         </button>
+
 
         <div className="relative">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -152,6 +208,8 @@ export function HistorySidebar() {
               }}
               isActive={session.id === sessionId}
               onSelect={() => handleSelectSession(session.id)}
+              onRename={handleRenameSession}
+              onDelete={handleDeleteSession}
             />
           ))
         )}

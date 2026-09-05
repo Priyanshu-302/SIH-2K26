@@ -2,6 +2,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const API_ENDPOINTS = {
   SESSIONS: `${API_BASE_URL}/sessions`,
+  SESSION_DETAIL: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}`,
   CHAT_ASK: `${API_BASE_URL}/chat/ask`,
   DOCUMENTS: `${API_BASE_URL}/documents`,
   DOCUMENT_UPLOAD: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/documents`,

@@ -25,10 +25,11 @@ export function useChatStream() {
 
       let currentSessionId = sessionId;
 
-      // Create session on-demand if not present
+      // Create session on-demand with user's prompt as title if not present
       if (!currentSessionId) {
         try {
-          const sessionRes = await createSessionAPI();
+          const title = queryText.trim().length > 55 ? queryText.trim().slice(0, 52) + '...' : queryText.trim();
+          const sessionRes = await createSessionAPI(title);
           currentSessionId = sessionRes.sessionId;
           setSessionId(currentSessionId);
         } catch (err) {
@@ -90,6 +91,14 @@ export function useChatStream() {
         if (error.name !== 'AbortError') {
           addToast({ type: 'error', message: `Failed to execute assessment: ${error.message}` });
           finishStreaming();
+          useChatStore.setState((state) => {
+            const msgs = [...state.messages];
+            if (msgs.length > 0 && msgs[msgs.length - 1].role === 'assistant' && !msgs[msgs.length - 1].content) {
+              msgs.pop();
+              return { messages: msgs };
+            }
+            return state;
+          });
         }
       }
     },

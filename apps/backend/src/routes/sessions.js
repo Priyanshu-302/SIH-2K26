@@ -3,7 +3,11 @@ import multer from 'multer';
 import { sessionController } from '../controllers/session.controller.js';
 import { documentController } from '../controllers/document.controller.js';
 import { validate } from '../middleware/validator.middleware.js';
-import { createSessionSchema } from '../schemas/session.schema.js';
+import {
+  createSessionSchema,
+  updateSessionSchema,
+  deleteSessionSchema,
+} from '../schemas/session.schema.js';
 import { documentUploadSchema } from '../schemas/document.schema.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
@@ -31,6 +35,22 @@ router.post(
   sessionController.createSession
 );
 
+// PATCH /api/sessions/:sessionId - Rename session
+router.patch(
+  '/:sessionId',
+  authMiddleware,
+  validate(updateSessionSchema),
+  sessionController.renameSession
+);
+
+// DELETE /api/sessions/:sessionId - Delete session and cascaded messages
+router.delete(
+  '/:sessionId',
+  authMiddleware,
+  validate(deleteSessionSchema),
+  sessionController.deleteSession
+);
+
 // POST /api/sessions/:sessionId/documents - Upload document to session (Admin Only)
 router.post(
   '/:sessionId/documents',
@@ -42,3 +62,4 @@ router.post(
 );
 
 export default router;
+

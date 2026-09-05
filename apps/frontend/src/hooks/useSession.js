@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useChatStore } from '../store/chatStore';
-import { useUIStore } from '../store/uiStore';
-import { createSessionAPI, fetchSessionHistoryAPI } from '../services/apiService';
+import { fetchSessionHistoryAPI } from '../services/apiService';
 
 export function useSession() {
   const { sessionId, setSessionId, setMessages, clearSession } = useChatStore();
-  const { addToast } = useUIStore();
   const [isInitializing, setIsInitializing] = useState(false);
   const [sessionError, setSessionError] = useState(null);
+  const isLoadedRef = useRef(false);
 
   const loadSessionHistory = useCallback(async (targetSessionId) => {
     if (!targetSessionId) return;
+    setIsInitializing(true);
     try {
       const history = await fetchSessionHistoryAPI(targetSessionId);
-      if (Array.isArray(history)) {
+      if (Array.isArray(history) && history.length > 0) {
         const formattedMessages = history.map((m) => ({
           id: m._id || `msg-${Date.now()}`,
           role: m.role,
@@ -22,66 +22,44 @@ export function useSession() {
           timestamp: m.createdAt || new Date().toISOString(),
         }));
         setMessages(formattedMessages);
+      } else {
+        setMessages([]);
       }
     } catch (err) {
       console.warn('[Session History Load Warning]:', err.message);
+      setSessionError(err.message);
+      setMessages([]);
+      if (err.message?.includes('Access Denied') || err.message?.includes('403') || err.message?.includes('Invalid Session')) {
+        clearSession();
+      }
+    } finally {
+      setIsInitializing(false);
     }
-  }, [setMessages]);
+  }, [setMessages, clearSession]);
 
-  const initSession = useCallback(async () => {
-    setIsInitializing(true);
-    setSessionError(null);
+  // Load saved session on initial app mount only
+  useEffect(() => {
+    if (isLoadedRef.current) return;
+    isLoadedRef.current = true;
 
-    const activeSessionId = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('ayur_session_id') : null);
-
+    const activeSessionId = typeof window !== 'undefined' ? localStorage.getItem('ayur_session_id') : null;
     if (activeSessionId) {
       setSessionId(activeSessionId);
-      await loadSessionHistory(activeSessionId);
-      setIsInitializing(false);
-      return;
+      loadSessionHistory(activeSessionId);
     }
+  }, [loadSessionHistory, setSessionId]);
 
-    try {
-      const data = await createSessionAPI();
-      if (data && data.sessionId) {
-        setSessionId(data.sessionId);
-        setMessages([]);
-      }
-    } catch (err) {
-      setSessionError(err.message);
-      addToast({ type: 'error', message: `Session creation failed: ${err.message}` });
-    } finally {
-      setIsInitializing(false);
-    }
-  }, [sessionId, setSessionId, setMessages, loadSessionHistory, addToast]);
-
-  useEffect(() => {
-    initSession();
-  }, [initSession]);
-
-  const resetSession = async () => {
+  // Reset to a clean new assessment workspace (without creating blank DB entries)
+  const resetSession = useCallback(() => {
     clearSession();
-    setIsInitializing(true);
-    try {
-      const data = await createSessionAPI();
-      if (data && data.sessionId) {
-        setSessionId(data.sessionId);
-        setMessages([]);
-        window.dispatchEvent(new Event('refresh_sessions'));
-      }
-    } catch (err) {
-      addToast({ type: 'error', message: `Failed to create new session: ${err.message}` });
-    } finally {
-      setIsInitializing(false);
-    }
-  };
+  }, [clearSession]);
 
   return {
     sessionId,
     isInitializing,
     sessionError,
-    initSession,
     resetSession,
     loadSessionHistory,
   };
 }
+

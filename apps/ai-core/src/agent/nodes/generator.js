@@ -10,18 +10,28 @@ export async function generatorNode(state, config = {}) {
 
     const template = loadPromptTemplate('generator.txt');
 
-    // Keep top 4 retrieved documents and trim each to 800 chars to respect Groq 8000 TPM budget
-    const docsText = retrievedDocuments.length > 0
-        ? retrievedDocuments.slice(0, 4).map((doc, idx) => {
-            const trimmedText = (doc.text || '').length > 800 ? doc.text.slice(0, 800) + '...' : (doc.text || '');
+    // Filter by relevance threshold and limit to top 3 documents to save tokens
+    const qualifiedDocs = retrievedDocuments
+        .filter(doc => typeof doc.score !== 'number' || doc.score >= 0.5)
+        .slice(0, 3);
+
+    const targetDocs = qualifiedDocs.length > 0 ? qualifiedDocs : retrievedDocuments.slice(0, 2);
+
+    const docsText = targetDocs.length > 0
+        ? targetDocs.map((doc, idx) => {
+            const clean = (doc.text || '')
+                .replace(/[\r\n\t]+/g, ' ')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+            const trimmedText = clean.length > 450 ? clean.slice(0, 447) + '...' : clean;
             return `---
 Source ID: Doc ${idx + 1}
-Source Name: ${doc.source}
+Source: ${doc.source}
 Section: ${doc.section}
 Content: ${trimmedText}
 ---`;
         }).join('\n\n')
-        : 'No documents retrieved.';
+        : 'No legal documents retrieved.';
 
     // Keep only last 2 messages and truncate long assistant outputs to preserve tokens
     const historyText = Array.isArray(chatHistory) && chatHistory.length > 0
@@ -50,6 +60,7 @@ Content: ${trimmedText}
         model: appConfig.GROQ_MODEL_NAME,
         modelName: appConfig.GROQ_MODEL_NAME,
         temperature: 0.2,
+        maxTokens: 1200,
     });
 
     const messages = [{ role: 'user', content: prompt }];

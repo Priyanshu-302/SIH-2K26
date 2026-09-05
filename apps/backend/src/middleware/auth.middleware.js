@@ -15,7 +15,7 @@ export function authMiddleware(req, res, next) {
       id: 'usr_dev101',
       email: 'tester@ayur-ip.gov.in',
       name: 'Ayurveda Researcher',
-      role: 'researcher',
+      role: 'admin',
     };
     return next();
   }
