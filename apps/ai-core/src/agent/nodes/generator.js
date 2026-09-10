@@ -60,7 +60,7 @@ Content: ${trimmedText}
         model: appConfig.GROQ_MODEL_NAME,
         modelName: appConfig.GROQ_MODEL_NAME,
         temperature: 0.2,
-        maxTokens: 1200,
+        maxTokens: 4000,
     });
 
     const messages = [{ role: 'user', content: prompt }];

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut } from 'lucide-react';
+import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut, BarChart3 } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { Footer } from '../components/common/Footer';
@@ -90,6 +90,21 @@ export default function DashboardLayout() {
               <span className="hidden sm:inline">Ingest Datasets</span>
             </NavLink>
           )}
+
+          <NavLink
+            to="/app/evals"
+            title="Statutory Benchmarks & Metrics"
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                isActive
+                  ? 'bg-white text-ayur-800 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`
+            }
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Evals & Metrics</span>
+          </NavLink>
 
           <NavLink
             to="/app/profile"

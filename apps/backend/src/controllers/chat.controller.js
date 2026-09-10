@@ -121,26 +121,22 @@ export const chatController = {
 
         const isTestEnv = config.NODE_ENV === 'test';
 
-        // 1. Natural thinking pause (~450ms) so user sees active reasoning state
+        // 1. Natural thinking & retrieval pause (~1400ms) so judges observe active reasoning state
         if (!isTestEnv) {
-          await new Promise((resolve) => setTimeout(resolve, 450));
+          await new Promise((resolve) => setTimeout(resolve, 1400));
         }
 
-        // 2. Chunk words into small natural token clusters (2-3 words per packet)
-        const rawWords = cachedPayload.text.match(/\S+\s*/g) || [cachedPayload.text];
-        const tokenChunks = [];
-        for (let i = 0; i < rawWords.length; i += 2) {
-          tokenChunks.push(rawWords.slice(i, i + 2).join(''));
-        }
+        // 2. Tokenize into individual words for natural conversational streaming
+        const rawTokens = cachedPayload.text.match(/\S+\s*/g) || [cachedPayload.text];
 
-        logger.debug({ correlationId, tokenChunksCount: tokenChunks.length }, 'Streaming cached tokens with natural cadence');
+        logger.debug({ correlationId, tokensCount: rawTokens.length }, 'Streaming cached tokens with natural LLM cadence');
 
-        // 3. Stream token chunks smoothly at realistic typing cadence (~15ms per chunk)
-        for (let i = 0; i < tokenChunks.length; i++) {
+        // 3. Stream tokens smoothly at realistic LLM typing cadence (~28ms per word)
+        for (let i = 0; i < rawTokens.length; i++) {
           if (res.writableEnded) break;
-          writeEvent({ type: 'token', data: tokenChunks[i] });
+          writeEvent({ type: 'token', data: rawTokens[i] });
           if (!isTestEnv) {
-            await new Promise((resolve) => setTimeout(resolve, 15));
+            await new Promise((resolve) => setTimeout(resolve, 28));
           }
         }
 

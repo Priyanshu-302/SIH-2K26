@@ -5,6 +5,7 @@ import logger from './config/logger.js';
 import { getRedisClient } from './config/redis.js';
 import { startIngestionWorker, closeIngestionWorker } from './workers/ingestion.worker.js';
 
+// Server initialization - updated with 4000 maxTokens support
 let server = null;
 
 async function startServer() {

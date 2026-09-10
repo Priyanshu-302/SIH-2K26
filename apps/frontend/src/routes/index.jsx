@@ -10,6 +10,7 @@ const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 const ChatPage = React.lazy(() => import('../pages/ChatPage'));
 const AdminUploadPage = React.lazy(() => import('../pages/AdminUploadPage'));
 const ProfilePage = React.lazy(() => import('../pages/ProfilePage'));
+const EvalsPage = React.lazy(() => import('../pages/EvalsPage'));
 const NotFoundPage = React.lazy(() => import('../pages/NotFoundPage'));
 
 export const router = createBrowserRouter([
@@ -68,6 +69,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'evals',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <EvalsPage />
           </Suspense>
         ),
       },

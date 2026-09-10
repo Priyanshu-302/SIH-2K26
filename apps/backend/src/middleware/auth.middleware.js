@@ -44,3 +44,26 @@ export function authMiddleware(req, res, next) {
     });
   }
 }
+
+/**
+ * Optional authentication middleware: populates req.user if token is present,
+ * or attaches an audit/guest examiner role if not.
+ */
+export function optionalAuthMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    req.user = { id: 'auditor_guest', role: 'examiner', name: 'Patent Examiner / Jury Auditor' };
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, config.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    req.user = { id: 'auditor_guest', role: 'examiner', name: 'Patent Examiner / Jury Auditor' };
+    next();
+  }
+}
+

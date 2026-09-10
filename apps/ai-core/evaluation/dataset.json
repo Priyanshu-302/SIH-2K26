@@ -1,0 +1,191 @@
+[
+  {
+    "id": "eval_001",
+    "category": "Section 3(p) applicability",
+    "question": "We are developing a mosquito repellent incense stick composed of cow dung, cow urine, and a blend of neem and lemon leaf extracts. Can we get a patent for this formulation in India?",
+    "answer": "No. Under Section 3(p) of the Patents Act, 1970, any invention which is, in effect, traditional knowledge or an aggregation or duplication of known properties of traditionally known components is not patentable. In the case of M/s. The Zero Brand Zone Pvt. Ltd. v. The Controller of Patents & Designs (2024), the Madras High Court upheld the refusal of a patent for an eco-friendly lamp composed of Panchagavya and herbal leaves. The Court held that the phrase 'in effect' is designed to prevent the monopolization of traditional knowledge through routine, non-inventive combinations of well-known natural substances, and that combining ingredients with known properties does not meet the inventive step threshold unless unexpected synergistic properties are demonstrated.",
+    "required_citations": [
+      "Patents Act s.3(p)",
+      "case: M/s. The Zero Brand Zone Pvt. Ltd. v. The Controller of Patents & Designs (2024)"
+    ],
+    "difficulty": "basic",
+    "notes": "Tests understanding of Section 3(p) patentability bar for mixtures of traditional ingredients like Panchagavya and common herbs."
+  },
+  {
+    "id": "eval_002",
+    "category": "TK-based patent opposition (Section 25)",
+    "question": "A competitor has filed a patent application for a wound-healing ointment containing turmeric and honey in specific ratios. What legal grounds and evidence can we use to oppose this application before it is granted?",
+    "answer": "You can file a pre-grant opposition under Section 25(1)(k) of the Patents Act, 1970, on the ground that the invention is anticipated having regard to the knowledge, oral or otherwise, available within any local or indigenous community in India or elsewhere. Additionally, you should cite Section 3(p) as the formulation is a mere aggregation of known properties of traditional components (turmeric for wound healing and honey for soothing/antibacterial properties). To support this, you should submit prior art documentation from the Traditional Knowledge Digital Library (TKDL) or ancient texts (such as the Ayurveda Samhitas) showing the historical use of turmeric and honey in wound care, similar to the historical Turmeric Patent Opposition (1997) where India successfully revoked a US patent using ancient Sanskrit texts as prior art.",
+    "required_citations": [
+      "Patents Act s.25(1)(k)",
+      "Patents Act s.3(p)",
+      "case: Turmeric Patent Opposition (1997)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests knowledge of pre-grant opposition grounds based on traditional knowledge and the practical role of TKDL prior art."
+  },
+  {
+    "id": "eval_003",
+    "category": "Biological material source disclosure requirements",
+    "question": "We are an Indian biotechnology company applying for a patent for an active herbal extract isolated from a rare plant species found in the Western Ghats. Do we need to have the National Biodiversity Authority (NBA) approval in hand before filing the patent application or during the examination?",
+    "answer": "No, you do not need NBA approval in hand at the time of filing or during examination, but it is a mandatory condition precedent before the grant of the patent. Under Section 10(4)(d)(ii)(D) of the Patents Act, 1970, you must disclose the source and geographical origin of the biological material. According to the Delhi High Court in Manu Chaudhary v. Controller of Patents and Designs (2026), the Patent Office should not reject a patent application during examination simply because NBA approval is pending; instead, the application must be deferred to allow the applicant time to secure the approval from the NBA. Furthermore, the Calcutta High Court in Fraunhofer Gesellschaft v. Controller of Patents (2026) confirmed that the disclosure obligation is absolute, even if the biological material is considered incidental to the invention.",
+    "required_citations": [
+      "Patents Act s.10(4)(d)(ii)(D)",
+      "case: Manu Chaudhary v. Controller of Patents and Designs (2026)",
+      "case: Fraunhofer Gesellschaft v. Controller of Patents (2026)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests statutory disclosure requirements under Section 10 and recent case law clarifying the timing of NBA approval vs. examination."
+  },
+  {
+    "id": "eval_004",
+    "category": "GI registration eligibility for a traditional/regional product",
+    "question": "A local weavers association wants to register a traditional design of holy rings made in a specific village in Kerala as a Geographical Indication. If another neighboring region also claims a historical right to manufacture holy rings under the exact same name, can the association obtain an exclusive standalone GI registration for that name, and what legal grounds prevent this?",
+    "answer": "No, they cannot obtain an exclusive standalone GI registration if both regions have legitimate historical claims to the name. Under Section 2(e) and Section 9(a) of the Geographical Indications of Goods (Registration and Protection) Act, 1999, registration is prohibited for any geographical indication the use of which would be likely to deceive or cause confusion. Additionally, under Section 10, the Act regulates homonymous geographical indications (where identical names describe different origins) to ensure that the public is not misled and that concurrent users are treated equitably. In the landmark case of Embassy of Peru v. Union of India (2026), the Delhi High Court held that since both Peru and Chile have concurrent, legitimate historical claims to the spirit name 'Pisco', granting exclusive GI registration to Peru would cause consumer confusion under Section 9(a). The Court held that a standalone registration cannot be granted to monopolize a name with shared geographical heritage, and the homonymous GI doctrine must be applied to navigate such claims.",
+    "required_citations": [
+      "GI Act s.2(e)",
+      "GI Act s.9(a)",
+      "GI Act s.10",
+      "case: Embassy of Peru v. Union of India"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests GI registration criteria, deception bar under Section 9(a), and homonymous GI rules under Section 10 following the Pisco precedent."
+  },
+  {
+    "id": "eval_005",
+    "category": "GI vs trademark conflict",
+    "question": "We have registered a Geographical Indication for a traditional regional herbal tea. A hotel chain has opened a premium lounge called the '[Our GI Name] Lounge' where they serve various beverages. Can we sue them for GI infringement under Section 25 of the GI Act?",
+    "answer": "No. Under Section 25 of the Geographical Indications of Goods Act, 1999, GI protection is strictly limited to the prevention of unauthorized use on 'goods' that misleads the public as to their geographical origin or constitutes unfair competition. In the landmark case of Tea Board, India v. ITC Limited (2019), the Calcutta High Court held that the Tea Board's GI and Certification Trademark for 'Darjeeling' tea could not be used to prevent ITC from running a 'Darjeeling Lounge' at its hotel. The court ruled that GIs apply to goods, not services (such as hospitality), and that there was no likelihood of consumer confusion or unfair competition since the businesses operated in completely different sectors.",
+    "required_citations": [
+      "GI Act s.25",
+      "case: Tea Board, India v. ITC Limited (2019)"
+    ],
+    "difficulty": "trap",
+    "notes": "Trap question testing whether the system incorrectly applies GI protections to service sectors like hospitality."
+  },
+  {
+    "id": "eval_006",
+    "category": "Biological Diversity Act benefit-sharing/ABS approval requirement",
+    "question": "We are an entirely Indian-owned Ayurvedic pharmaceutical company sourcing herbal raw materials locally from farmers in Uttarakhand to manufacture Chyawanprash. Are we required to pay access and benefit sharing (ABS) fees to the State Biodiversity Board, or is this obligation limited only to foreign entities?",
+    "answer": "Yes, you are required to pay Fair and Equitable Benefit Sharing (FEBS) fees. Under Sections 3 and 6 of the Biological Diversity Act, 2002, and the 2014 ABS Guidelines, domestic Indian entities are obligated to share benefits for the commercial utilization of biological resources. In the landmark case of Divya Pharmacy v. Union of India (2018), the Uttarakhand High Court dismissed the claim of Patanjali's manufacturing unit (Divya Pharmacy) that domestic entities were exempt from benefit-sharing obligations. The Court held that the BDA does not create a distinction between Indian and foreign entities regarding the duty to share benefits with the local communities who conserve these biological resources.",
+    "required_citations": [
+      "BDA s.3",
+      "BDA s.6",
+      "case: Divya Pharmacy v. Union of India (2018)"
+    ],
+    "difficulty": "basic",
+    "notes": "Tests the applicability of BDA benefit-sharing obligations to domestic companies following the Divya Pharmacy precedent."
+  },
+  {
+    "id": "eval_007",
+    "category": "Ayurvedic drug classification/licensing under Drugs and Cosmetics Act",
+    "question": "We hold a valid Ayurvedic manufacturing license for a red tooth powder containing traditional herbs. Can we claim excise duty exemptions as an 'Ayurvedic medicine' rather than a 'toilet preparation', based solely on the fact that we have this license?",
+    "answer": "No. Holding an Ayurvedic drug license raises a presumption of regulatory compliance, but it is not conclusive for product classification under other laws (such as tax or excise statutes). In the landmark Supreme Court case of Shree Baidyanath Ayurved Bhavan Ltd. v. Collector of Central Excise (1995), the Court held that the product 'Dant Manjan Lal' (a red herbal tooth powder) must be classified as a 'toilet preparation' rather than an 'Ayurvedic medicine' using the 'common parlance' test. The Court established that if a product is primarily marketed, sold, and understood by the public for daily hygiene rather than as a curative medicament for a specific disease, it does not qualify as a medicine, regardless of its Ayurvedic licensing.",
+    "required_citations": [
+      "Drugs and Cosmetics Act Chapter IVA",
+      "case: Shree Baidyanath Ayurved Bhavan Ltd. v. Collector of Central Excise (1995)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests the common parlance classification test for Ayurvedic products that cross the boundary between medicine and cosmetics."
+  },
+  {
+    "id": "eval_008",
+    "category": "Ayurvedic product advertising restrictions (Magic Remedies Act)",
+    "question": "Can an Ayurvedic manufacturer advertise that their formulation is a 'guaranteed permanent cure' for diabetes or high blood pressure under the Drugs and Magic Remedies Act?",
+    "answer": "No. Under Section 3 of the Drugs and Magic Remedies (Objectionable Advertisements) Act, 1954, no person can publish any advertisement referring to any drug (including Ayurvedic/Unani/Siddha medicines) that claims to prevent, cure, or mitigate any disease specified in the Schedule of the Act (which includes diabetes, high blood pressure, and asthma). In the landmark case of Indian Medical Association v. Union of India (2024-2025), the Supreme Court held Patanjali Ayurved in contempt for violating its undertaking and publishing misleading advertisements claiming cures for chronic diseases in direct violation of the DMR Act, leading to a mandatory self-declaration requirement for all medical advertisers in India.",
+    "required_citations": [
+      "Drugs and Magic Remedies Act s.3",
+      "case: Indian Medical Association v. Union of India (2024-2025)"
+    ],
+    "difficulty": "basic",
+    "notes": "Tests regulatory limits on advertising Ayurvedic formulations for chronic diseases listed in the DMR Act Schedule."
+  },
+  {
+    "id": "eval_009",
+    "category": "FSSAI Ayurveda Aahara classification",
+    "question": "We want to manufacture herbal energy bars infused with standard Ayurvedic herbs. Can we license these bars under the standard food category, or must we follow the FSSAI Ayurveda Aahara regulations?",
+    "answer": "If the product is marketed as food containing Ayurvedic ingredients, it must comply with the FSSAI Food Safety and Standards (Ayurveda Aahara) Regulations, 2022. Under these regulations, 'Ayurveda Aahara' refers to food prepared in accordance with the authoritative books of Ayurveda. The regulations stipulate that Ayurveda Aahara products cannot contain synthetic chemicals, vitamins, or minerals, and cannot be marketed to infants. They must bear a distinct 'Ayurveda Aahara' logo on the label and cannot make therapeutic claims (though structure/function claims are permitted with licensing).",
+    "required_citations": [
+      "FSSAI Ayurveda Aahara Regulations 2022"
+    ],
+    "difficulty": "basic",
+    "notes": "Tests FSSAI labeling and formulation rules for Ayurvedic foods/Ayurveda Aahara."
+  },
+  {
+    "id": "eval_010",
+    "category": "A cross-Act question requiring synthesis of two or more statutes",
+    "question": "If we develop a novel extraction process for an Ayurvedic herb that increases its bioavailability, and we want to file both a patent in India and register the plant's unique origin as a Geographical Indication, what biological resource disclosure and approval obligations must we fulfill across the different Acts?",
+    "answer": "To proceed with both filings, you must navigate three separate statutes:\n1. Patents Act, 1970 (Section 10(4)(d)(ii)(D)): You must disclose the source and geographical origin of the biological material in your patent application.\n2. Biological Diversity Act, 2002 (Section 6): Since you are applying for a patent in India based on biological resources sourced from India, you must apply to the National Biodiversity Authority (NBA) for approval before the grant of the patent. As established in Manu Chaudhary v. Controller of Patents (2026), the patent office will examine your application but defer the final grant until NBA approval is submitted.\n3. Geographical Indications Act, 1999 (Section 2(e) & Section 9): To register the geographical origin as a GI, you must apply to the GI Registry and demonstrate that the unique characteristics of the plant are attributable to its geographical origin. Note that under Section 25 of the GI Act, once the GI is registered, you cannot register a trademark that conflicts with it, but this does not prevent you from obtaining a patent on a novel, non-obvious process using that material, provided you comply with Patents Act Section 3(p) (proving it is not just an aggregation of traditional properties).",
+    "required_citations": [
+      "Patents Act s.10(4)(d)(ii)(D)",
+      "BDA s.6",
+      "GI Act s.2(e)",
+      "case: Manu Chaudhary v. Controller of Patents and Designs (2026)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Synthesis question testing intersection of Patents, Biodiversity, and GI Acts for a single bio-derived development."
+  },
+  {
+    "id": "eval_011",
+    "category": "PPV&FR Act Section 39 (Farmers' rights)",
+    "question": "If an international agro-chemical company holds a valid plant breeder registration for a potato variety, can they sue local Indian farmers who save, share, and grow seeds harvested from that variety, and are farmers broadly immune from such lawsuits under Section 39 of the PPV&FR Act?",
+    "answer": "No, farmers are not broadly immune from being sued, but they possess a statutory defense under the Act. Under Section 39(1)(iv) of the PPV&FR Act, 2001, a farmer is entitled to save, use, sow, resow, retain, exchange, share, or sell their farm produce, including seed of a variety protected under the Act, provided they do not sell branded seed. In the landmark Supreme Court ruling in Kavitha Kuruganti v. PepsiCo India Holdings (2026), the Court upheld PepsiCo's registration of the FL 2027 potato variety, refusing to revoke it, and clarified that the Act does not broadly restrain breeders from taking legal action to enforce their rights. However, the Court affirmed that individual farmers sued by a breeder retain the absolute right to raise Section 39(1)(iv) as a specific statutory defense in that lawsuit to protect their seed-saving and non-branded selling practices.",
+    "required_citations": [
+      "PPV&FR Act s.39(1)(iv)",
+      "case: Kavitha Kuruganti v. PepsiCo India Holdings (2026)"
+    ],
+    "difficulty": "basic",
+    "notes": "Tests the boundary between breeders' registration rights and farmers' seed-saving defense under Section 39 following the FL 2027 potato variety precedent."
+  },
+  {
+    "id": "eval_012",
+    "category": "Patents Act Section 3(p) vs. inventive step",
+    "question": "We have isolated a specific active alkaloid from the Neem plant and combined it with an extract of Tulsi, resulting in a synergistic 5-fold increase in anti-viral activity compared to the individual extracts. Does this fall under the Section 3(p) patentability bar?",
+    "answer": "If the combination merely exhibits the additive properties of its components, it is barred under Section 3(p) as a mere aggregation of known properties of traditional components. However, if the combination exhibits true synergy (i.e., the combined effect is significantly greater than the sum of the individual effects, which is not obvious to a person skilled in the art), it may overcome the Section 3(p) bar and satisfy the inventive step requirement under Section 2(1)(ja) of the Patents Act. In M/s. The Zero Brand Zone Pvt. Ltd. v. The Controller of Patents & Designs (2024), the Court noted that a simple combination without unexpected synergistic results is considered routine experimentation and is barred under Section 3(p).",
+    "required_citations": [
+      "Patents Act s.3(p)",
+      "Patents Act s.2(1)(ja)",
+      "case: M/s. The Zero Brand Zone Pvt. Ltd. v. The Controller of Patents & Designs (2024)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests the boundary between Section 3(p) exclusion and inventive synergy for herbal formulations."
+  },
+  {
+    "id": "eval_013",
+    "category": "Copyright Act Section 13 (originality of databases)",
+    "question": "We have compiled a digital database of 5,000 classical Ayurvedic recipes collected from public domain ancient texts. We translated the recipes into English and indexed them by symptom. Can a competitor copy our database, or does it have copyright protection under Section 13?",
+    "answer": "A competitor cannot copy your database. While the underlying traditional recipes are public domain, your translated and indexed database is protected as a compilation under Section 13(1)(a) of the Copyright Act, 1957. In Eastern Book Company v. D.B. Modak (2008), the Supreme Court held that copyright protection is available for compilations if there is a minimum standard of originality, requiring the exercise of labor, skill, and judgment that is not trivial or purely mechanical. The process of translating, selecting, organizing, and indexing the public domain recipes satisfies this standard of originality, protecting your compilation from direct copying.",
+    "required_citations": [
+      "Copyright Act s.13",
+      "case: Eastern Book Company v. D.B. Modak (2008)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests database/compilation copyright criteria for public domain traditional knowledge texts."
+  },
+  {
+    "id": "eval_014",
+    "category": "BDA vs. Patents Act jurisdiction",
+    "question": "If the Patent Office rejects our application for failing to disclose the origin of a biological material, can we appeal to the National Biodiversity Authority (NBA) to overturn the Patent Office's decision?",
+    "answer": "No. The Patents Act and the Biological Diversity Act operate in distinct regulatory spheres. While Section 10(4)(d)(ii)(D) of the Patents Act, 1970 governs disclosure of biological resources to the Patent Controller, Section 6 of the Biological Diversity Act, 2002 governs NBA approvals. In Shaafi Naturcure v. Assistant Controller of Patents (2026), the Delhi High Court held that the NBA does not have the jurisdiction to evaluate patentability criteria (like novelty, inventive step, or sufficiency of disclosure) under the Patents Act. The NBA's role is strictly to regulate access to biological resources and impose benefit-sharing conditions, while the Patent Office remains the sole authority to determine whether a patent should be granted or refused based on Patents Act criteria.",
+    "required_citations": [
+      "Patents Act s.10(4)(d)(ii)(D)",
+      "BDA s.6",
+      "case: Shaafi Naturcure v. Assistant Controller of Patents (2026)"
+    ],
+    "difficulty": "intermediate",
+    "notes": "Tests understanding of the distinct regulatory scopes of the Patent Office and the NBA under Delhi HC precedents."
+  },
+  {
+    "id": "eval_015",
+    "category": "GI vs. Trademark genericness (Trap question)",
+    "question": "Can a company register a trademark for 'Basmati' for selling organic rice, or does the GI registration of Basmati prevent this?",
+    "answer": "No. Under Section 25 of the Geographical Indications Act, 1999, registration of a trademark that conflicts with a registered GI is prohibited. Furthermore, 'Basmati' is a registered Geographical Indication in India. Under Section 9 of the GI Act and Section 9(1)(b) of the Trade Marks Act, 1999, a geographical name that denotes the origin of goods cannot be registered as a private trademark. A naive search might suggest that 'Basmati' is a generic term for long-grain rice, but in Indian law, it is protected as a GI to prevent genericization and trademark monopolization.",
+    "required_citations": [
+      "GI Act s.9",
+      "GI Act s.25",
+      "Trade Marks Act s.9(1)(b)"
+    ],
+    "difficulty": "trap",
+    "notes": "Trap question testing whether the system confuses trademark genericness with GI protection barriers for regional names."
+  }
+]

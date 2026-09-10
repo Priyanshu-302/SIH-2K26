@@ -13,6 +13,8 @@ export const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
   AUTH_ME: `${API_BASE_URL}/auth/me`,
   AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
+  EVALS_BENCHMARK: `${API_BASE_URL}/evals/benchmark`,
+  EVALS_RUN: `${API_BASE_URL}/evals/run`,
 };
 
 export const DOCUMENT_CATEGORIES = [

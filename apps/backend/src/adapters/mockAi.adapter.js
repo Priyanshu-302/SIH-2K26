@@ -23,7 +23,7 @@ export async function* mockAgentStream({ query, sessionId, history, options } = 
 
   for (const token of reasoningTokens) {
     yield { type: 'token', data: token };
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    await new Promise((resolve) => setTimeout(resolve, 140));
   }
 
   let mockCitations = [];
@@ -238,11 +238,11 @@ To achieve patentability, you must demonstrate a non-obvious synergistic composi
   yield { type: 'citations', data: mockCitations };
   await new Promise((resolve) => setTimeout(resolve, 150));
 
-  // Yield assessment response tokens
+  // Yield assessment response tokens with natural typing cadence
   const words = responseText.split(' ');
   for (const word of words) {
     yield { type: 'token', data: word + ' ' };
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    await new Promise((resolve) => setTimeout(resolve, 32));
   }
 
   // Yield terminal done token

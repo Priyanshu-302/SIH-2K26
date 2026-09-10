@@ -1,5 +1,6 @@
 import { graph } from './agent/graph.js';
 export { runIngestion } from './ingestion/pipeline.js';
+export * from '../evaluation/metrics.js';
 
 class Queue {
   constructor() {
