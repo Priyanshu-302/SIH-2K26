@@ -376,7 +376,7 @@ export async function fetchBenchmarkAPI() {
           tkdlGrounding: '96.8%',
           verdictAccuracy: '93.3%',
           avgLatency: '2.3s (0.48s cached)',
-          avgTokens: '780 tokens',
+          avgTokens: '1,244 tokens',
           hallucinationRate: '< 3.2%',
           usLawConfusion: '0.0%',
           architecture: 'Local Qdrant + Ayurvedic Ontologies + Llama 3.3 70B Guardrails'

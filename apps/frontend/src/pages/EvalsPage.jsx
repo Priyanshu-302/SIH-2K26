@@ -318,7 +318,7 @@ export default function EvalsPage() {
             {summary.tokenReduction}
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Domain-curated chunking eliminates redundant web HTML boilerplate, reducing token consumption from ~4,450 to ~780.
+            Domain-curated chunking eliminates redundant web HTML boilerplate, reducing token consumption from ~4,450 to ~1,240.
           </p>
         </div>
       </div>

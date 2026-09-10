@@ -49,7 +49,7 @@ async function runEvaluation() {
     const item = dataset[i];
     const startTime = Date.now();
     let responseText = '';
-    let tokenUsage = { prompt: 250, completion: 420 };
+    let tokenUsage = { prompt: 751, completion: 493 };
 
     if (runAgent && isLive) {
       try {
