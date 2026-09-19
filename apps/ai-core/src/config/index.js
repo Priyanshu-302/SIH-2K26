@@ -17,8 +17,8 @@ if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
 
 const configSchema = z.object({
   GROQ_API_KEY: z.string().default("gsk_placeholder_key"),
-  GROQ_MODEL_NAME: z.string().default("openai/gpt-oss-120b"),
-  QDRANT_URL: z.string().url("Valid Qdrant URL is required").default("http://localhost:6333"),
+  GROQ_MODEL_NAME: z.string().default("llama-3.3-70b-versatile"),
+  QDRANT_URL: z.string().default("http://localhost:6333"),
   QDRANT_API_KEY: z.string().optional(),
   QDRANT_COLLECTION: z.string().default("ayurveda_ip_corpus"),
   EMBEDDING_PROVIDER: z.enum(["local", "hosted"]).default("local"),

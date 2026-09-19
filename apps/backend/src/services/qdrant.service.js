@@ -12,7 +12,10 @@ let qdrantClient = null;
 export function getQdrantClient() {
   if (!qdrantClient) {
     logger.info(`Initializing Qdrant Client at ${config.QDRANT_URL}...`);
-    qdrantClient = new QdrantClient({ url: config.QDRANT_URL });
+    qdrantClient = new QdrantClient({
+      url: config.QDRANT_URL,
+      apiKey: config.QDRANT_API_KEY || undefined,
+    });
   }
   return qdrantClient;
 }

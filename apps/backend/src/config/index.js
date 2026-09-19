@@ -7,8 +7,8 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  MONGODB_URI: z.string().url().default('mongodb://localhost:27017/ayur-ip-db'),
-  REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  MONGODB_URI: z.string().default('mongodb://localhost:27017/ayur-ip-db'),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
   AI_ADAPTER_MOCK: z.preprocess((val) => {
     if (val === 'true') return true;
     if (val === 'false') return false;
@@ -16,6 +16,7 @@ const envSchema = z.object({
   }, z.boolean().default(true)),
   GROQ_API_KEY: z.string().optional(),
   QDRANT_URL: z.string().url().default('http://localhost:6333'),
+  QDRANT_API_KEY: z.string().optional(),
   JWT_SECRET: z.string().default('ayur_ip_jwt_secure_secret_2026'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   BREVO_API_KEY: z.string().optional(),
