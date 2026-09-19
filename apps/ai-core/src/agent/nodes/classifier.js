@@ -28,14 +28,14 @@ export async function classifierNode(state) {
         };
     }
 
-    // Fallback: Ultra-lightweight, high-speed LLM classifier (llama-3.1-8b-instant)
+    // Fallback: Ultra-lightweight, high-speed LLM classifier
     const template = loadPromptTemplate('classifier.txt');
     const formattedPrompt = template.replace('{query}', query);
 
     const model = new ChatGroq({
         apiKey: config.GROQ_API_KEY,
-        model: "llama-3.1-8b-instant",
-        modelName: "llama-3.1-8b-instant",
+        model: "openai/gpt-oss-20b",
+        modelName: "openai/gpt-oss-20b",
         temperature: 0,
     }).withStructuredOutput(classificationSchema);
 
