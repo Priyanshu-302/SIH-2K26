@@ -12,9 +12,8 @@ apps/backend/storage/uploads/*
 !apps/backend/storage/uploads/.gitkeep
 
 *.log
-.DS_Store
-
 *.txt
+!apps/ai-core/prompts/*.txt
 
 # Datasets and Statutory documents
 statutory_pdfs/
