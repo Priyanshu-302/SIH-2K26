@@ -4,6 +4,7 @@ import config from './config/index.js';
 import logger from './config/logger.js';
 import { getRedisClient } from './config/redis.js';
 import { startIngestionWorker, closeIngestionWorker } from './workers/ingestion.worker.js';
+import { startKeepAliveService, stopKeepAliveService } from './services/keepAlive.service.js';
 
 // Server initialization - updated with 1000-1500 token benchmark metrics
 let server = null;
@@ -33,6 +34,8 @@ async function startServer() {
     // 4. Start Express server listener
     server = app.listen(config.PORT, () => {
       logger.info(`🚀 Server running in [${config.NODE_ENV}] mode on port ${config.PORT}`);
+      // 5. Start Keep-Alive self-pinger to prevent cold shutdowns on free hosting
+      startKeepAliveService();
     });
   } catch (error) {
     logger.error('Failed to start backend server:', error);
@@ -43,6 +46,8 @@ async function startServer() {
 // Graceful teardown handler
 async function handleShutdown(signal) {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+  stopKeepAliveService();
 
   if (server) {
     logger.info('Closing HTTP server listener...');

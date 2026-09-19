@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   EVALS_BENCHMARK: `${API_BASE_URL}/evals/benchmark`,
   EVALS_RUN: `${API_BASE_URL}/evals/run`,
   FORMS_GENERATE: `${API_BASE_URL}/forms/generate`,
+  PING: `${API_BASE_URL}/ping`,
 };
 
 export const DOCUMENT_CATEGORIES = [

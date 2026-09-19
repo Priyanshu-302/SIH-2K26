@@ -25,6 +25,16 @@ app.use(
   })
 );
 
+// Root level ping endpoint for external monitors (e.g. UptimeRobot, Render keep-alive)
+app.get('/ping', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Ayur-IP server active',
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Mount core endpoints
 app.use('/api', apiRouter);
 

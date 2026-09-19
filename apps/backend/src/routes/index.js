@@ -7,9 +7,11 @@ import healthRouter from './health.js';
 import authRouter from './auth.js';
 import evalsRouter from './evals.js';
 import formsRouter from './forms.js';
+import pingRouter from './ping.js';
 
 const router = Router();
 
+router.use('/ping', pingRouter);
 router.use('/auth', authRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/sessions', historyRouter); // Mounts /sessions/:sessionId/history
