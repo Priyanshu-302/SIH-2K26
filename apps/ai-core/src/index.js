@@ -28,13 +28,14 @@ class Queue {
 }
 
 export async function runAgent(query, options = {}) {
-  const { chatHistory = [], abortSignal, metadata = {} } = options;
+  const { chatHistory = [], abortSignal, metadata = {}, jurisdiction = 'national' } = options;
 
   try {
     const finalState = await graph.invoke(
       {
         query,
         chatHistory,
+        jurisdiction,
         classification: '',
         classificationReasoning: '',
         generation: '',
@@ -65,7 +66,7 @@ export async function runAgent(query, options = {}) {
 }
 
 export async function* runAgentStream(payload) {
-  const { query, sessionId, history = [], options = {} } = payload || {};
+  const { query, sessionId, history = [], jurisdiction = 'national', options = {} } = payload || {};
 
   if (!query) {
     yield { type: "error", message: "Missing required parameter 'query'." };
@@ -79,6 +80,7 @@ export async function* runAgentStream(payload) {
     {
       query,
       chatHistory: history,
+      jurisdiction,
       classification: '',
       classificationReasoning: '',
       generation: '',

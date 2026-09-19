@@ -3,12 +3,15 @@ import { useChatStore } from '../store/chatStore';
 import { useUIStore } from '../store/uiStore';
 import { streamAssessmentAPI } from '../services/stream';
 import { createSessionAPI } from '../services/apiService';
+import { translateText } from '../services/bhashiniService';
+import { useLanguageStore } from '../store/languageStore';
 
 export function useChatStream() {
   const abortControllerRef = useRef(null);
   const {
     sessionId,
     setSessionId,
+    jurisdiction,
     addUserMessage,
     initAssistantMessage,
     appendStreamToken,
@@ -18,17 +21,31 @@ export function useChatStream() {
   } = useChatStore();
 
   const { addToast } = useUIStore();
+  const { selectedLanguage, setIsTranslating } = useLanguageStore();
 
   const submitQuery = useCallback(
     async (queryText) => {
       if (!queryText || !queryText.trim() || isStreaming) return;
 
       let currentSessionId = sessionId;
+      let englishQuery = queryText.trim();
+
+      // ── Translate user query → English (if not already English) ──
+      if (selectedLanguage !== 'en') {
+        try {
+          setIsTranslating(true);
+          englishQuery = await translateText(queryText.trim(), selectedLanguage, 'en');
+        } catch (_) {
+          englishQuery = queryText.trim(); // fallback
+        } finally {
+          setIsTranslating(false);
+        }
+      }
 
       // Create session on-demand with user's prompt as title if not present
       if (!currentSessionId) {
         try {
-          const title = queryText.trim().length > 55 ? queryText.trim().slice(0, 52) + '...' : queryText.trim();
+          const title = englishQuery.length > 55 ? englishQuery.slice(0, 52) + '...' : englishQuery;
           const sessionRes = await createSessionAPI(title);
           currentSessionId = sessionRes.sessionId;
           setSessionId(currentSessionId);
@@ -38,10 +55,8 @@ export function useChatStream() {
         }
       }
 
-      // Add user message to state
+      // Add the ORIGINAL user text (in their language) to the UI
       addUserMessage(queryText.trim());
-
-      // Add empty assistant message to store
       initAssistantMessage();
 
       // Create new AbortController
@@ -53,8 +68,9 @@ export function useChatStream() {
 
       try {
         await streamAssessmentAPI({
-          query: queryText.trim(),
+          query: englishQuery,  // always send English to the AI backend
           sessionId: currentSessionId,
+          jurisdiction,
           signal: abortController.signal,
           onEvent: (event) => {
             if (!event || !event.type) return;
@@ -80,6 +96,39 @@ export function useChatStream() {
               case 'done':
                 finishStreaming();
                 window.dispatchEvent(new Event('refresh_sessions'));
+
+                // ── Translate AI response → user language (if not English) ──
+                if (selectedLanguage !== 'en') {
+                  (async () => {
+                    const state = useChatStore.getState();
+                    const msgs = state.messages;
+                    const lastMsg = msgs[msgs.length - 1];
+                    if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.content) return;
+
+                    try {
+                      setIsTranslating(true);
+                      const translated = await translateText(
+                        lastMsg.content,
+                        'en',
+                        selectedLanguage
+                      );
+                      if (translated && translated !== lastMsg.content) {
+                        useChatStore.setState((s) => {
+                          const updated = [...s.messages];
+                          const idx = updated.length - 1;
+                          if (updated[idx]?.role === 'assistant') {
+                            updated[idx] = { ...updated[idx], content: translated };
+                          }
+                          return { messages: updated };
+                        });
+                      }
+                    } catch (_) {
+                      // silently skip — English response still shown
+                    } finally {
+                      setIsTranslating(false);
+                    }
+                  })();
+                }
                 break;
 
               default:
@@ -102,7 +151,7 @@ export function useChatStream() {
         }
       }
     },
-    [sessionId, isStreaming, addUserMessage, initAssistantMessage, appendStreamToken, setCitations, finishStreaming, addToast, setSessionId]
+    [sessionId, jurisdiction, isStreaming, selectedLanguage, setIsTranslating, addUserMessage, initAssistantMessage, appendStreamToken, setCitations, finishStreaming, addToast, setSessionId]
   );
 
   const cancelStream = useCallback(() => {

@@ -373,7 +373,7 @@ export default function LoginPage() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Dr. A. Sharma"
+                  placeholder="e.g. Dr. Rajesh Verma"
                   className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all"
                 />
               </div>
@@ -405,8 +405,8 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setEmail('examiner.sharma@ipindia.gov.in');
-                      setFullName('Dr. A. Sharma (Examiner)');
+                      setEmail('examiner.patents@ipindia.gov.in');
+                      setFullName('Dr. K. Iyer (Patent Examiner)');
                     }}
                     className="px-2.5 py-1 rounded-lg bg-sage-50 hover:bg-sage-100 border border-sage-200 text-[11px] font-medium text-slate-700 transition-colors cursor-pointer"
                   >
@@ -416,7 +416,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => {
                       setEmail('researcher.ayush@csir.res.in');
-                      setFullName('Priyanshu (R&D Lead)');
+                      setFullName('Dr. R. Raman (Ayush R&D Lead)');
                     }}
                     className="px-2.5 py-1 rounded-lg bg-sage-50 hover:bg-sage-100 border border-sage-200 text-[11px] font-medium text-slate-700 transition-colors cursor-pointer"
                   >

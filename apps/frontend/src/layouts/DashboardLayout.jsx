@@ -1,11 +1,13 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut, BarChart3 } from 'lucide-react';
+import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { Footer } from '../components/common/Footer';
+import { useT } from '../config/i18n';
 
 export default function DashboardLayout() {
+  const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
   const { toasts, removeToast } = useUIStore();
@@ -52,7 +54,7 @@ export default function DashboardLayout() {
             </div>
             <div className="hidden sm:block">
               <span className="text-base sm:text-lg font-bold font-heading text-slate-900 leading-none block">Ayur-IP</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-ayur-700 uppercase tracking-wider block">Patent Intelligence</span>
+              <span className="text-[9px] sm:text-[10px] font-semibold text-ayur-700 uppercase tracking-wider block">{t('patentIntelligence')}</span>
             </div>
           </div>
         </div>
@@ -71,7 +73,7 @@ export default function DashboardLayout() {
             }
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Workspace</span>
+            <span className="hidden sm:inline">{t('workspace')}</span>
           </NavLink>
 
           {user?.role === 'admin' && (
@@ -87,24 +89,9 @@ export default function DashboardLayout() {
               }
             >
               <UploadCloud className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Ingest Datasets</span>
+              <span className="hidden sm:inline">{t('ingestDatasets')}</span>
             </NavLink>
           )}
-
-          <NavLink
-            to="/app/evals"
-            title="Statutory Benchmarks & Metrics"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                isActive
-                  ? 'bg-white text-ayur-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`
-            }
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Evals & Metrics</span>
-          </NavLink>
 
           <NavLink
             to="/app/profile"
@@ -118,7 +105,7 @@ export default function DashboardLayout() {
             }
           >
             <UserCheck className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">{t('profile')}</span>
           </NavLink>
         </nav>
 
@@ -129,7 +116,7 @@ export default function DashboardLayout() {
             className="text-xs font-medium text-slate-500 hover:text-slate-800 hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-sage-50 transition-colors"
           >
             <Home className="w-3.5 h-3.5" />
-            <span>Home</span>
+            <span>{t('home')}</span>
           </button>
 
           {/* User Profile Avatar Link */}
@@ -142,9 +129,9 @@ export default function DashboardLayout() {
             </div>
             <div className="hidden lg:block text-left max-w-[120px]">
               <p className="text-xs font-bold text-slate-800 leading-none group-hover:text-ayur-700 transition-colors truncate">
-                {user?.name || user?.email?.split('@')[0] || 'Researcher'}
+                {user?.name || user?.email?.split('@')[0] || t('researcherRole')}
               </p>
-              <p className="text-[9px] text-slate-500 capitalize">{user?.role || 'Examiner'}</p>
+              <p className="text-[9px] text-slate-500 capitalize">{user?.role === 'admin' ? 'Admin' : (user?.role === 'examiner' ? t('examinerRole') : t('researcherRole'))}</p>
             </div>
           </div>
 
@@ -156,7 +143,7 @@ export default function DashboardLayout() {
             className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer ml-1"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px] font-semibold">Sign out</span>
+            <span className="hidden sm:inline text-[11px] font-semibold">{t('signOut')}</span>
           </button>
         </div>
       </header>

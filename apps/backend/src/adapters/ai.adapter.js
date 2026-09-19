@@ -15,12 +15,12 @@ let runAgentStream = null;
  * @param {Object} [context.options] - Extensible configuration parameters.
  * @returns {AsyncGenerator<Object, void, unknown>} Async generator yielding events.
  */
-export async function* streamAssessment(query, { sessionId, history, options } = {}) {
+export async function* streamAssessment(query, { sessionId, history, jurisdiction = 'national', options } = {}) {
   const correlationId = 'ai-stream';
   
   if (config.AI_ADAPTER_MOCK) {
-    logger.debug({ correlationId, sessionId }, 'Routing RAG query to Mock AI Adapter');
-    yield* mockAgentStream({ query, sessionId, history, options });
+    logger.debug({ correlationId, sessionId, jurisdiction }, 'Routing RAG query to Mock AI Adapter');
+    yield* mockAgentStream({ query, sessionId, history, jurisdiction, options });
     return;
   }
 
@@ -30,6 +30,6 @@ export async function* streamAssessment(query, { sessionId, history, options } =
     runAgentStream = aiCore.runAgentStream;
   }
 
-  logger.debug({ correlationId, sessionId }, 'Routing RAG query to production AI Core Engine');
-  yield* runAgentStream({ query, sessionId, history, options });
+  logger.debug({ correlationId, sessionId, jurisdiction }, 'Routing RAG query to production AI Core Engine');
+  yield* runAgentStream({ query, sessionId, history, jurisdiction, options });
 }

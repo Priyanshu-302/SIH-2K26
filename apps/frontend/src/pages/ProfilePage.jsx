@@ -147,7 +147,7 @@ export default function ProfilePage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Dr. Aarav Sharma"
+                  placeholder="e.g. Dr. Rajesh Verma"
                   required
                   className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all"
                 />

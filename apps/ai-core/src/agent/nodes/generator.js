@@ -5,10 +5,12 @@ import { loadPromptTemplate } from "../../utils/prompts.js";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function generatorNode(state, config = {}) {
-    const { query, retrievedDocuments = [], validatorFeedback = '', chatHistory = [] } = state;
+    const { query, retrievedDocuments = [], validatorFeedback = '', chatHistory = [], jurisdiction = 'national' } = state;
     const onToken = config.configurable?.onToken;
 
-    const template = loadPromptTemplate('generator.txt');
+    const isInternational = jurisdiction === 'international';
+    const templateName = isInternational ? 'generator_international.txt' : 'generator.txt';
+    const template = loadPromptTemplate(templateName);
 
     // Filter by relevance threshold and limit to top 3 documents to save tokens
     const qualifiedDocs = retrievedDocuments

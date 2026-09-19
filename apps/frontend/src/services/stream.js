@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from '../config/api';
  * Initiates an SSE response stream using fetch and ReadableStream
  * (With offline interactive simulation if backend is not yet started)
  */
-export async function streamAssessmentAPI({ query, sessionId, historyOverride, signal, onEvent }) {
+export async function streamAssessmentAPI({ query, sessionId, historyOverride, jurisdiction = 'national', signal, onEvent }) {
   try {
     const response = await fetch(API_ENDPOINTS.CHAT_ASK, {
       method: 'POST',
@@ -18,6 +18,7 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
       body: JSON.stringify({
         query,
         sessionId,
+        jurisdiction,
         ...(historyOverride ? { historyOverride } : {}),
       }),
       signal,
@@ -76,7 +77,20 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
   }
 
   // --- Offline Interactive Simulation ---
-  const simulatedTokens = [
+  const isInternational = jurisdiction === 'international';
+  const simulatedTokens = isInternational ? [
+    "### 1. International Patentability & Novelty Assessment (PCT / EPC / 35 U.S.C.)\n",
+    "Under international patent regimes (PCT Articles 33(2) & 33(3)), Ayurvedic compositions are scrutinized for novelty and inventive step. While traditional formulations face prior art anticipation via global TKDL access agreements with the USPTO and EPO, isolated active fractions or synergistic combinations demonstrating verifiable unexpected technical effects overcome obviousness under EPC Article 56.\n\n",
+    "### 2. WIPO GRATK Treaty (2024) Mandatory Disclosure Compliance\n",
+    "Pursuant to Article 3 of the WIPO Treaty on Intellectual Property, Genetic Resources and Associated Traditional Knowledge (adopted May 24, 2024), patent applicants are legally obligated to disclose the country of origin of genetic resources and the indigenous community providing associated traditional knowledge. Article 4 safeguards non-retroactivity for applications filed prior to entry into force, while Article 7 provides crucial revocation protection, prohibiting patent invalidation solely for inadvertent formal disclosure defects.\n\n",
+    "### 3. Nagoya Protocol & Cross-Border ABS Clearance\n",
+    "Cross-border transfer and commercialization of Indian biological resources require compliance with the Convention on Biological Diversity (CBD) and the Nagoya Protocol. Commercial entities must obtain Prior Informed Consent (PIC) and execute Mutually Agreed Terms (MAT) via the National Biodiversity Authority (NBA Form I), generating an Internationally Recognized Certificate of Compliance (IRCC) registered on the ABS Clearing-House (ABSCH).\n\n",
+    "### 4. Foreign Filing Permission (Section 39 Clearance)\n",
+    "Indian resident applicants seeking direct foreign patent protection must obtain written Foreign Filing Permission (FFP) under Section 39 of the Indian Patents Act 1970 (Form 25) prior to filing abroad, or file an initial Indian priority application at least six weeks prior to entering the PCT International Phase (30-month national phase deadline).\n\n",
+    "### 5. Target Jurisdiction Regulatory Pathways (US FDA DSHEA & EU THMPD)\n",
+    "- **United States**: Botanical formulations enter the US market primarily as Dietary Supplements under DSHEA (21 U.S.C. § 343(r)(6)) permitting substantiated structure/function claims with mandatory FDA disclaimer. Therapeutic or disease treatment claims require an Investigational New Drug (IND) application under FDA Botanical Drug Guidance.\n",
+    "- **European Union**: Herbal medicinal products can qualify for simplified registration under the Traditional Herbal Medicinal Products Directive (Directive 2004/24/EC - THMPD) upon demonstrating 30 years of documented medicinal use, including at least 15 years within the European Union."
+  ] : [
     "Based on preliminary retrieval against the ",
     "Traditional Knowledge Digital Library (TKDL) ",
     "and classical Ayurvedic treatises (Charaka & Sushruta Samhita), ",
@@ -95,14 +109,31 @@ export async function streamAssessmentAPI({ query, sessionId, historyOverride, s
 
   for (const token of simulatedTokens) {
     if (signal?.aborted) return;
-    await new Promise((r) => setTimeout(r, 45));
+    await new Promise((r) => setTimeout(r, 30));
     onEvent({ type: 'token', data: token });
   }
 
   // Send citations metadata
   onEvent({
     type: 'citations',
-    data: [
+    data: isInternational ? [
+      {
+        id: 'wipo-gratk-art3',
+        source: 'WIPO GRATK Treaty (2024)',
+        section: 'Article 3 & Article 7',
+        snippet: 'Mandatory disclosure of country of origin of genetic resources and associated traditional knowledge; revocation protection under Article 7.',
+        confidence: 'high',
+        url: 'https://www.wipo.int/gratk',
+      },
+      {
+        id: 'pct-art33',
+        source: 'Patent Cooperation Treaty (PCT)',
+        section: 'Rule 51bis & Sec 39 FFP',
+        snippet: 'PCT 30-month international phase entry requirements and Section 39 foreign filing permission.',
+        confidence: 'high',
+        url: 'https://www.wipo.int/pct',
+      }
+    ] : [
       {
         id: 'cit-1',
         source: 'Traditional Knowledge Digital Library (TKDL Vol. II)',

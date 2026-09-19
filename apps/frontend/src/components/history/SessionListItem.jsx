@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, ChevronRight, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useT } from '../../config/i18n';
+import { useLanguageStore } from '../../store/languageStore';
+import { applyOfflineGlossary } from '../../services/bhashiniService';
 
 export function SessionListItem({
   session,
@@ -8,7 +11,13 @@ export function SessionListItem({
   onRename,
   onDelete,
 }) {
+  const t = useT();
+  const selectedLanguage = useLanguageStore((s) => s.selectedLanguage);
   const [isEditing, setIsEditing] = useState(false);
+
+  const displayTitle = React.useMemo(() => {
+    return applyOfflineGlossary(session.title || '', selectedLanguage) || t('untitledAssessment');
+  }, [session.title, selectedLanguage, t]);
   const [editTitle, setEditTitle] = useState(session.title || '');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,7 +126,7 @@ export function SessionListItem({
       >
         <span className="text-[11px] font-semibold text-red-700 flex items-center gap-1.5 truncate">
           <Trash2 className="w-3.5 h-3.5 text-red-500 shrink-0" />
-          <span>Delete session?</span>
+          <span>{t('deleteSessionConfirm')}</span>
         </span>
         <div className="flex items-center gap-1 shrink-0">
           <button
@@ -125,18 +134,18 @@ export function SessionListItem({
             onClick={handleConfirmDelete}
             disabled={isSubmitting}
             className="px-2.5 py-1 text-[10px] font-bold bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-            title="Confirm deletion"
+            title={t('yes')}
           >
-            {isSubmitting ? '...' : 'Yes'}
+            {isSubmitting ? '...' : t('yes')}
           </button>
           <button
             type="button"
             onClick={handleCancelDelete}
             disabled={isSubmitting}
             className="px-2.5 py-1 text-[10px] font-medium bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-md transition-colors cursor-pointer"
-            title="Cancel"
+            title={t('no')}
           >
-            No
+            {t('no')}
           </button>
         </div>
       </div>
@@ -165,14 +174,14 @@ export function SessionListItem({
           disabled={isSubmitting}
           maxLength={100}
           className="flex-1 min-w-0 px-2 py-1 text-xs font-medium text-slate-800 bg-white border border-ayur-200 rounded-lg focus:outline-none focus:border-ayur-600 focus:ring-1 focus:ring-ayur-500 transition-all"
-          placeholder="Session title..."
+          placeholder={t('sessionTitlePlaceholder')}
         />
         <button
           type="button"
           onClick={handleSaveRename}
           disabled={isSubmitting || !editTitle.trim()}
           className="p-1.5 rounded-md text-ayur-700 hover:bg-ayur-100 active:bg-ayur-200 transition-colors cursor-pointer disabled:opacity-40 shrink-0"
-          title="Save (Enter)"
+          title={t('save')}
         >
           <Check className="w-4 h-4" />
         </button>
@@ -181,7 +190,7 @@ export function SessionListItem({
           onClick={handleCancelRename}
           disabled={isSubmitting}
           className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-          title="Cancel (Esc)"
+          title={t('cancel')}
         >
           <X className="w-4 h-4" />
         </button>
@@ -206,7 +215,7 @@ export function SessionListItem({
         />
         <div className="overflow-hidden min-w-0 flex-1">
           <p className="text-xs font-semibold truncate leading-tight">
-            {session.title}
+            {displayTitle}
           </p>
           <span className="text-[10px] text-slate-400 block mt-0.5">
             {session.date}
@@ -221,8 +230,8 @@ export function SessionListItem({
             type="button"
             onClick={handleStartRename}
             className="p-1.5 rounded-md text-slate-400 hover:text-ayur-700 hover:bg-white shadow-xs transition-all cursor-pointer"
-            title="Rename assessment"
-            aria-label="Rename assessment"
+            title={t('renameTooltip')}
+            aria-label={t('renameTooltip')}
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -230,8 +239,8 @@ export function SessionListItem({
             type="button"
             onClick={handleStartDelete}
             className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-white shadow-xs transition-all cursor-pointer"
-            title="Delete assessment"
-            aria-label="Delete assessment"
+            title={t('deleteTooltip')}
+            aria-label={t('deleteTooltip')}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

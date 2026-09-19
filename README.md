@@ -179,7 +179,14 @@ VITE_APP_TITLE=Ayur-IP Intelligence Engine
 VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```
 
-### 5. Launch the Development Environment
+### 5. Ingest & Index the Corpus into Qdrant (First Time Setup)
+Populate the local Qdrant vector database with all 3,311 statutory and judicial chunks:
+```bash
+pnpm ingest
+```
+*(Note: If testing without Qdrant or Groq API keys, keep `AI_ADAPTER_MOCK=true` in `apps/backend/.env` to run zero-setup out of the box).*
+
+### 6. Launch the Development Environment
 Run all services concurrently using Turborepo:
 ```bash
 pnpm dev

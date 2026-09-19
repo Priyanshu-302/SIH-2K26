@@ -48,6 +48,11 @@ const MessageSchema = new mongoose.Schema({
     type: [CitationSchema],
     default: [],
   },
+  jurisdiction: {
+    type: String,
+    enum: ['national', 'international'],
+    default: 'national',
+  },
 }, {
   timestamps: {
     createdAt: true,

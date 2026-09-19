@@ -19,7 +19,7 @@ export const chatController = {
    */
   async ask(req, res, next) {
     const correlationId = req.id || 'chat-ask';
-    const { query, sessionId, historyOverride } = req.body;
+    const { query, sessionId, historyOverride, jurisdiction = 'national' } = req.body;
 
     try {
       // 1. Verify session or reject if non-existent
@@ -78,8 +78,8 @@ export const chatController = {
         return res.write(`data: ${JSON.stringify(eventObj)}\n\n`);
       };
 
-      // Emit session acknowledgment event so client stores the valid session ID
-      writeEvent({ type: 'session', sessionId: activeSessionId });
+      // Emit session acknowledgment event so client stores the valid session ID and active jurisdiction
+      writeEvent({ type: 'session', sessionId: activeSessionId, jurisdiction });
 
       // 3. Keep track of stream state
       let generatedText = '';
@@ -97,11 +97,12 @@ export const chatController = {
         sessionId: activeSessionId,
         role: 'user',
         content: query,
+        jurisdiction,
       });
 
-      // Check Redis query cache (0 token cost for repeated questions)
+      // Check Redis query cache (0 token cost for repeated questions, isolated by jurisdiction)
       const normalized = normalizeQuery(query);
-      const cacheKey = `rag:cache:${normalized}`;
+      const cacheKey = `rag:cache:${jurisdiction}:${normalized}`;
       let cachedPayload = null;
 
       try {
@@ -143,15 +144,16 @@ export const chatController = {
         if (cachedPayload.citations?.length) {
           writeEvent({ type: 'citations', data: cachedPayload.citations });
         }
-        writeEvent({ type: 'done' });
+        writeEvent({ type: 'done', jurisdiction });
         terminalSent = true;
         generatedText = cachedPayload.text;
         collectedCitations = cachedPayload.citations || [];
       } else {
-        // Cache miss: Invoke dynamic AI stream assessment
+        // Cache miss: Invoke dynamic AI stream assessment with jurisdiction context
         const generator = await streamAssessment(query, {
           sessionId: activeSessionId,
           history: chatHistory,
+          jurisdiction,
         });
 
         for await (const event of generator) {
@@ -164,7 +166,7 @@ export const chatController = {
 
           // Handle natural generator done token
           if (event.type === 'done') {
-            writeEvent({ type: 'done' });
+            writeEvent({ type: 'done', jurisdiction });
             terminalSent = true;
             break;
           }
@@ -184,7 +186,7 @@ export const chatController = {
         }
 
         if (!terminalSent) {
-          writeEvent({ type: 'done' });
+          writeEvent({ type: 'done', jurisdiction });
         }
 
         // Cache completed output in Redis with 24-hour TTL (86400s)
@@ -195,6 +197,7 @@ export const chatController = {
               await redis.setex(cacheKey, 86400, JSON.stringify({
                 text: generatedText,
                 citations: collectedCitations,
+                jurisdiction,
               }));
               logger.debug({ correlationId, cacheKey }, 'Cached LLM assessment in Redis (24h TTL)');
             }
@@ -212,6 +215,7 @@ export const chatController = {
           role: 'assistant',
           content: generatedText,
           citations: collectedCitations,
+          jurisdiction,
         });
       }
 

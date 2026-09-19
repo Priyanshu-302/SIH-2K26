@@ -32,12 +32,13 @@ export const historyService = {
    * @param {Array<Object>} [messageData.citations] - Optional citations list
    * @returns {Promise<Object>} The created message
    */
-  async addMessage({ sessionId, role, content, citations = [] }) {
+  async addMessage({ sessionId, role, content, citations = [], jurisdiction = 'national' }) {
     const message = new Message({
       sessionId,
       role,
       content,
       citations,
+      jurisdiction,
     });
     return message.save();
   },

@@ -94,7 +94,41 @@ describe('Chat API Integration Tests', () => {
       expect(userMsg.content).toBe('Triphala classical formulation assessment');
       expect(assistantMsg.content).toContain('Triphala');
       expect(assistantMsg.citations.length).toBe(2);
-    });
+    }, 15000);
+
+    it('should stream international WIPO GRATK & PCT assessment when jurisdiction is international', async () => {
+      const response = await request(app)
+        .post('/api/chat/ask')
+        .send({
+          query: 'Ashwagandha export to US dietary supplement market and WIPO GRATK compliance',
+          sessionId: testSessionId,
+          jurisdiction: 'international'
+        })
+        .expect('Content-Type', /text\/event-stream/);
+
+      expect(response.status).toBe(200);
+
+      const lines = response.text.split('\n\n');
+      const events = lines
+        .filter(line => line.startsWith('data: '))
+        .map(line => JSON.parse(line.substring(6)));
+
+      const sessionEvent = events.find(e => e.type === 'session');
+      expect(sessionEvent.jurisdiction).toBe('international');
+
+      const doneEvent = events.find(e => e.type === 'done');
+      expect(doneEvent.jurisdiction).toBe('international');
+
+      const citationsEvent = events.find(e => e.type === 'citations');
+      expect(citationsEvent.data.length).toBeGreaterThan(0);
+      expect(citationsEvent.data.some(c => c.source.includes('WIPO') || c.source.includes('PCT'))).toBe(true);
+
+      const savedMessages = await Message.find({ sessionId: testSessionId });
+      const assistantMsg = savedMessages.find(m => m.role === 'assistant');
+      expect(assistantMsg).toBeDefined();
+      expect(assistantMsg.jurisdiction).toBe('international');
+      expect(assistantMsg.content).toContain('WIPO');
+    }, 15000);
 
     it('should yield error event for simulated pipeline failure queries', async () => {
       const response = await request(app)

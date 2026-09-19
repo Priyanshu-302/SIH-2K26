@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
   EVALS_BENCHMARK: `${API_BASE_URL}/evals/benchmark`,
   EVALS_RUN: `${API_BASE_URL}/evals/run`,
+  FORMS_GENERATE: `${API_BASE_URL}/forms/generate`,
 };
 
 export const DOCUMENT_CATEGORIES = [

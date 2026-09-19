@@ -10,9 +10,11 @@ import {
   deleteSessionAPI,
 } from '../../services/apiService';
 import { SessionListItem } from './SessionListItem';
+import { useT } from '../../config/i18n';
+import { useLanguageStore } from '../../store/languageStore';
 
-function formatSessionDate(dateString) {
-  if (!dateString) return 'Recent';
+function formatSessionDate(dateString, t, selectedLanguage) {
+  if (!dateString) return '';
   try {
     const date = new Date(dateString);
     const now = new Date();
@@ -20,16 +22,23 @@ function formatSessionDate(dateString) {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
 
-    if (diffMins < 2) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    if (diffMins < 2) return t('justNow');
+    if (diffMins < 60) return `${diffMins} ${t('mAgo')}`;
+    if (diffHours < 24) return `${diffHours} ${t('hAgo')}`;
+    
+    const localeMap = {
+      hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN',
+      bn: 'bn-IN', mr: 'mr-IN', gu: 'gu-IN', ml: 'ml-IN', en: 'en-US'
+    };
+    return date.toLocaleDateString(localeMap[selectedLanguage] || 'en-US', { month: 'short', day: 'numeric' });
   } catch (e) {
-    return 'Recent';
+    return '';
   }
 }
 
 export function HistorySidebar() {
+  const t = useT();
+  const selectedLanguage = useLanguageStore((s) => s.selectedLanguage);
   const [searchTerm, setSearchTerm] = useState('');
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -139,7 +148,7 @@ export function HistorySidebar() {
       {/* Mobile Header with Close Button */}
       <div className="p-3.5 sm:p-4 space-y-3 border-b border-sage-100">
         <div className="flex items-center justify-between md:hidden">
-          <span className="text-xs font-bold font-heading text-slate-800">Query History</span>
+          <span className="text-xs font-bold font-heading text-slate-800">{t('queryHistory')}</span>
           <button
             onClick={closeSidebar}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-sage-50"
@@ -160,7 +169,7 @@ export function HistorySidebar() {
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ayur-700 hover:bg-ayur-800 text-white text-xs font-semibold shadow-soft-card transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Assessment</span>
+          <span>{t('newAssessment')}</span>
         </button>
 
 
@@ -170,7 +179,7 @@ export function HistorySidebar() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search past queries..."
+            placeholder={t('searchPastQueries')}
             className="w-full pl-8 pr-3 py-1.5 bg-alabaster-100 border border-sage-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-ayur-600 transition-colors"
           />
         </div>
@@ -180,7 +189,7 @@ export function HistorySidebar() {
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
         <div className="flex items-center justify-between px-3 py-1 mb-1">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Recent Assessments ({filteredSessions.length})
+            {t('recentAssessments')} ({filteredSessions.length})
           </span>
           <button
             onClick={loadSessions}
@@ -188,14 +197,14 @@ export function HistorySidebar() {
             title="Refresh history list"
           >
             <Clock className="w-3 h-3" />
-            <span>Refresh</span>
+            <span>{t('refresh')}</span>
           </button>
         </div>
 
         {filteredSessions.length === 0 ? (
           <div className="text-center py-8 text-slate-400 text-xs px-4">
             <AlertCircle className="w-6 h-6 mx-auto mb-2 text-sage-300" />
-            <p>No matching assessment sessions found.</p>
+            <p>{t('noSessionsFound')}</p>
           </div>
         ) : (
           filteredSessions.map((session) => (
@@ -203,8 +212,8 @@ export function HistorySidebar() {
               key={session.id}
               session={{
                 id: session.id,
-                title: session.title || 'Untitled Assessment',
-                date: formatSessionDate(session.updatedAt || session.createdAt),
+                title: session.title || t('untitledAssessment'),
+                date: formatSessionDate(session.updatedAt || session.createdAt, t, selectedLanguage),
               }}
               isActive={session.id === sessionId}
               onSelect={() => handleSelectSession(session.id)}

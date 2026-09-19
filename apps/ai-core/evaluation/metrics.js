@@ -24,7 +24,14 @@ const STATUTE_PATTERNS = [
   { canon: 'Drugs and Magic Remedies Act s.3', regex: /(?:drugs and magic remedies|dmr)[^.]*?(?:sections?|sec\.?|s\.)\s*3\b|\bsections?\s*3\s+of\s+(?:the\s+)?(?:drugs and magic remedies|dmr act)/i },
   { canon: 'Drugs and Cosmetics Act Chapter IVA', regex: /(?:drugs and cosmetics act)[^.]*?(?:chapter\s*iva|\biva\b)|ayurvedic.*?(?:drug license|manufacturing license)/i },
   { canon: 'FSSAI Ayurveda Aahara Regulations 2022', regex: /(?:fssai|ayurveda aahara|food safety and standards)/i },
-  { canon: 'Copyright Act s.13', regex: /(?:copyright act)[^.]*?(?:sections?|sec\.?|s\.)\s*13\b|\bsections?\s*13(?:\s*\(\s*1\s*\)\s*\(\s*a\s*\))?\s+of\s+(?:the\s+)?copyright act/i }
+  { canon: 'Copyright Act s.13', regex: /(?:copyright act)[^.]*?(?:sections?|sec\.?|s\.)\s*13\b|\bsections?\s*13(?:\s*\(\s*1\s*\)\s*\(\s*a\s*\))?\s+of\s+(?:the\s+)?copyright act/i },
+  { canon: 'WIPO GRATK Treaty Art. 3', regex: /(?:wipo.*?gratk|wipo treaty.*?genetic resources|gratk treaty)[^.]*?(?:articles?|art\.?)\s*3\b|\bwipo gratk treaty\b|\bgratk treaty\b/i },
+  { canon: 'Nagoya Protocol Art. 6', regex: /(?:nagoya protocol)[^.]*?(?:articles?|art\.?)\s*(?:5|6|7|17)\b|\bnagoya protocol\b|\babs clearing-house\b/i },
+  { canon: 'PCT Rule 51bis', regex: /(?:pct|patent cooperation treaty)[^.]*?(?:rules?)\s*51\s*bis\b|\bpatent cooperation treaty\b|\bpct\b/i },
+  { canon: 'TRIPS Art. 27.3(b)', regex: /(?:trips|trips agreement)[^.]*?(?:articles?|art\.?)\s*27(?:\.3\s*\(\s*b\s*\))?|\btrips agreement\b/i },
+  { canon: 'Budapest Treaty Art. 3', regex: /(?:budapest treaty)[^.]*?(?:articles?|art\.?)\s*3\b|\bbudapest treaty\b|\bmtcc\b/i },
+  { canon: 'EU Directive 2004/24/EC THMPD', regex: /(?:2004\/24\/ec|thmpd|traditional herbal medicinal products directive)/i },
+  { canon: 'US FDA DSHEA / Botanical Guidance', regex: /(?:dshea|dietary supplement health and education act|botanical drug development guidance)/i }
 ];
 
 // Landmark Case Law registry for Ayur-IP
@@ -222,8 +229,10 @@ export function evaluateResponse(item, modelResponse, latencyMs = 0, tokenUsage 
   const citationStats = calculateCitationMetrics(extracted, item.required_citations || []);
   const verdictAligned = evaluateVerdict(modelResponse, item.answer);
 
-  // Hallucination heuristic: US law citations in Indian law queries or fabricated section numbers
-  const hasUsLawHallucination = /\b(?:35\s*u\.?s\.?c\.?|title\s*35|lanham\s*act|alice\s*v\.?\s*cls)\b/i.test(modelResponse);
+  // Hallucination heuristic: US law citations in domestic Indian law queries (exempt for international/export queries)
+  const isInternationalQuery = /international|export|treaty|wipo|pct|nagoya|trips|uspto|fda/i.test(item.category || '') ||
+                               /wipo|pct|nagoya|trips|export|uspto|fda|foreign/i.test(item.question || '');
+  const hasUsLawHallucination = !isInternationalQuery && /\b(?:35\s*u\.?s\.?c\.?|title\s*35|lanham\s*act|alice\s*v\.?\s*cls)\b/i.test(modelResponse);
   const groundednessScore = Math.max(0, Math.min(100, Math.round(
     (citationStats.recall * 50) + 
     (citationStats.precision * 30) + 

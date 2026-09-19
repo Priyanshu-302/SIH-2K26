@@ -8,17 +8,21 @@ import { config } from '../../config/index.js';
  * Populates 'retrievedDocuments' in the agent state.
  */
 export async function retrieverNode(state) {
-  const { query, classification } = state;
+  const { query, classification, jurisdiction = 'national' } = state;
 
   try {
     // Generate vector embedding for the search query
     const vector = await embedText(query);
 
-    // Optional metadata filtering:
-    // If classification is classical_knowledge, filter or prioritize classical_text.
-    // If classification is patentability, check patent_doc or legal_precedent.
+    // Optional metadata filtering based on classification and jurisdiction
     const filter = {};
-    if (classification === 'classical_knowledge') {
+    if (jurisdiction === 'international') {
+      filter.should = [
+        { key: 'category', match: { value: 'guideline' } },
+        { key: 'category', match: { value: 'legal_precedent' } },
+        { key: 'category', match: { value: 'classical_text' } }
+      ];
+    } else if (classification === 'classical_knowledge') {
       filter.must = [{ key: 'category', match: { value: 'classical_text' } }];
     } else if (classification === 'patentability') {
       filter.should = [

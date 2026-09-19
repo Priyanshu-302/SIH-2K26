@@ -8,10 +8,14 @@ import { ChatInput } from './ChatInput';
 import { StreamState } from './StreamState';
 import { Modal } from '../ui/Modal';
 import { FileDragDrop } from '../upload/FileDragDrop';
-import { PanelLeftClose, PanelLeft, Sparkles, BookOpen, PlusCircle, Scale, ArrowDown } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Sparkles, BookOpen, PlusCircle, Scale, ArrowDown, FileText } from 'lucide-react';
+import { useFormStore } from '../../store/formStore';
+import { StatutoryFormModal } from '../forms/StatutoryFormModal';
+import { useT } from '../../config/i18n';
 
 export function ChatWindow() {
-  const { messages, isStreaming, streamStatusText } = useChatStore();
+  const t = useT();
+  const { messages, isStreaming, streamStatusText, jurisdiction, setJurisdiction } = useChatStore();
   const { isSidebarOpen, isCitationPanelOpen, toggleSidebar, toggleCitationPanel } = useUIStore();
   const { isUploadModalOpen, setIsUploadModalOpen } = useDocumentStore();
   const { sessionId, isInitializing, resetSession } = useSession();
@@ -61,24 +65,58 @@ export function ChatWindow() {
   return (
     <div className="flex-1 flex flex-col h-full relative w-full overflow-hidden min-h-0">
       {/* Top Session Sub-Header */}
-      <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-md border-b border-sage-100 px-3 sm:px-6 flex items-center justify-between shrink-0">
+      <div className="h-14 sm:h-16 bg-white/95 backdrop-blur-md border-b border-sage-100 px-3 sm:px-6 flex items-center justify-between shrink-0 gap-2">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <button
             onClick={toggleSidebar}
             className="p-1.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-sage-50 border border-sage-200 shrink-0 transition-colors"
-            title={isSidebarOpen ? 'Hide Query History' : 'Show Query History'}
+            title={isSidebarOpen ? t('hideQueryHistory') : t('showQueryHistory')}
             aria-label="Toggle Query History"
           >
             {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
           </button>
-          <div className="overflow-hidden">
+          <div className="overflow-hidden hidden sm:block">
             <h3 className="text-xs sm:text-sm font-bold font-heading text-slate-900 truncate">
-              Ayurveda Prior Art Analysis
+              {jurisdiction === 'international' ? t('internationalAssessment') : t('domesticAssessment')}
             </h3>
             <span className="text-[9px] sm:text-[10px] text-slate-500 truncate block">
-              Patents Act 1970 • Section 3(p) Compliance
+              {jurisdiction === 'international' 
+                ? t('internationalSubtext')
+                : t('domesticSubtext')}
             </span>
           </div>
+        </div>
+
+        {/* Central Jurisdiction Toggle Switch */}
+        <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
+          <button
+            type="button"
+            onClick={() => setJurisdiction('national')}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              jurisdiction === 'national'
+                ? 'bg-white text-emerald-800 shadow-sm border border-emerald-300/80 font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            title="Switch to Indian National Regime (Patents Act 1970, Sec 3(p), BDA 2002)"
+          >
+            <span className="text-xs sm:text-sm">🇮🇳</span>
+            <span className="hidden md:inline">{t('indiaTab')}</span>
+            <span className="md:hidden">{t('indiaShort')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setJurisdiction('international')}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+              jurisdiction === 'international'
+                ? 'bg-white text-indigo-800 shadow-sm border border-indigo-300/80 font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            title="Switch to International Regime (WIPO GRATK Treaty 2024, PCT, US FDA, EU THMPD)"
+          >
+            <span className="text-xs sm:text-sm">🌐</span>
+            <span className="hidden md:inline">{t('globalTab')}</span>
+            <span className="md:hidden">{t('globalShort')}</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
@@ -88,29 +126,81 @@ export function ChatWindow() {
             className="text-[11px] sm:text-xs font-semibold text-ayur-800 hover:text-ayur-900 flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-ayur-50 hover:bg-ayur-100 transition-all border border-ayur-200 cursor-pointer"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">New Query</span>
+            <span className="hidden xs:inline">{t('newQuery')}</span>
           </button>
 
-          {/* Legal Citations Panel Toggle (Visible on Desktop & Mobile) */}
+          {/* Legal Citations Panel Toggle */}
           <button
             onClick={toggleCitationPanel}
             className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all cursor-pointer ${
               isCitationPanelOpen
-                ? 'bg-emerald-700 text-white border-emerald-800 shadow-sm'
+                ? (jurisdiction === 'international' ? 'bg-indigo-700 text-white border-indigo-800 shadow-sm' : 'bg-emerald-700 text-white border-emerald-800 shadow-sm')
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
             }`}
             title="Toggle Legal Citations Drawer"
           >
             <Scale className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Citations</span>
+            <span className="hidden sm:inline">{t('citations')}</span>
           </button>
 
-          <span className="hidden md:inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            <Sparkles className="w-3 h-3 text-emerald-600" />
-            <span>TKDL Active</span>
+          {/* Statutory Filing Forms Modal Trigger */}
+          <button
+            onClick={() => {
+              const latestAssistantMsg = messages.filter(m => m.role === 'assistant' && m.content).pop();
+              useFormStore.getState().openFormModal({
+                sessionId,
+                conversationText: latestAssistantMsg?.content || '',
+                initialTab: jurisdiction === 'international' ? 'IPO_FORM_25' : 'NBA_FORM_1',
+              });
+            }}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-sage-100 hover:bg-sage-200 text-slate-800 border border-sage-200 transition-all cursor-pointer"
+            title="Generate official statutory filing forms (IPO Form 25, NBA Form I/III, WIPO GRATK)"
+          >
+            <FileText className="w-3.5 h-3.5 text-emerald-700" />
+            <span className="hidden sm:inline">{t('statutoryForms')}</span>
+          </button>
+
+          <span className={`hidden lg:inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border ${
+            jurisdiction === 'international'
+              ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+              : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+          }`}>
+            <Sparkles className={`w-3 h-3 ${jurisdiction === 'international' ? 'text-indigo-600' : 'text-emerald-600'}`} />
+            <span>{jurisdiction === 'international' ? t('wipoActive') : t('tkdlActive')}</span>
           </span>
         </div>
       </div>
+
+      {/* Dynamic Contextual Jurisdiction Scope Bar */}
+      {jurisdiction === 'international' ? (
+        <div className="bg-gradient-to-r from-indigo-50/90 via-blue-50/70 to-indigo-50/90 border-b border-indigo-200/70 px-3 sm:px-6 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] text-indigo-900 shrink-0">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="inline-flex items-center gap-1 font-bold text-indigo-800 uppercase tracking-wider text-[9px] bg-indigo-100/90 px-2 py-0.5 rounded-md border border-indigo-300/60 shrink-0">
+              {t('internationalScopeLabel')}
+            </span>
+            <span className="truncate text-slate-700">
+              {t('evaluatingInternational')}
+            </span>
+          </div>
+          <div className="hidden lg:flex items-center gap-3 text-indigo-700 font-medium shrink-0 text-[10px]">
+            <span>{t('crossBorderPill')}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border-b border-emerald-200/70 px-3 sm:px-6 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] text-emerald-900 shrink-0">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-800 uppercase tracking-wider text-[9px] bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300/60 shrink-0">
+              {t('nationalScopeLabel')}
+            </span>
+            <span className="truncate text-slate-700">
+              {t('evaluatingNational')}
+            </span>
+          </div>
+          <div className="hidden lg:flex items-center gap-3 text-emerald-700 font-medium shrink-0 text-[10px]">
+            <span>{t('sbbNbaPill')}</span>
+          </div>
+        </div>
+      )}
 
       {/* Messages Scroll View with 60fps performance scroll */}
       <div
@@ -119,15 +209,21 @@ export function ChatWindow() {
         className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-0 relative scroll-smooth"
       >
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-3 sm:space-y-4 py-8 px-4">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-ayur-100 flex items-center justify-center text-ayur-700 shadow-sm border border-ayur-200">
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-3 sm:space-y-4 py-8 px-4">
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shadow-sm border ${
+              jurisdiction === 'international'
+                ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                : 'bg-ayur-100 text-ayur-700 border-ayur-200'
+            }`}>
               <BookOpen className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <h4 className="text-sm sm:text-base font-bold font-heading text-slate-900">
-              Begin Herbal Formulation IP Assessment
+              {jurisdiction === 'international' ? t('beginInternational') : t('beginAssessment')}
             </h4>
             <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
-              Enter patent claims, botanical compositions, or active compounds (e.g. <em>Azadirachta indica</em>, <em>Tinospora cordifolia</em>) to assess novelty, non-obviousness, and traditional knowledge anticipation.
+              {jurisdiction === 'international'
+                ? 'Assess patentability, WIPO GRATK mandatory disclosures, PCT 30-month national phase entries, US FDA DSHEA structure/function claims, and EU THMPD 15-year rule for botanical formulations.'
+                : 'Enter patent claims, botanical compositions, or active compounds (e.g. Azadirachta indica, Tinospora cordifolia) to assess novelty, Section 3(p) TK anticipation, Section 3(e) synergy, and NBA ABS compliance.'}
             </p>
           </div>
         ) : (
@@ -147,7 +243,7 @@ export function ChatWindow() {
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-ayur-800/90 hover:bg-ayur-900 text-white text-xs font-semibold shadow-elevated backdrop-blur-xs transition-all cursor-pointer hover:scale-105"
           >
             <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
-            <span>Latest response</span>
+            <span>{t('latestResponse')}</span>
           </button>
         </div>
       )}
@@ -161,10 +257,13 @@ export function ChatWindow() {
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        title="Upload Patent Claim or Manuscript"
+        title={t('uploadModalTitle')}
       >
         <FileDragDrop />
       </Modal>
+
+      {/* Statutory Filing & Compliance Modal */}
+      <StatutoryFormModal />
     </div>
   );
 }

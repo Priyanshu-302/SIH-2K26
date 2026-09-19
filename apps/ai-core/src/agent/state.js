@@ -8,6 +8,7 @@ export const AgentState = Annotation.Root({
     // Inputs
     query: Annotation(),
     chatHistory: Annotation(), // BaseMessage[] or array of message objects
+    jurisdiction: Annotation(), // "national" | "international"
 
     // Node Outputs & Intermediates
     classification: Annotation(),        // "classical_knowledge" | "patentability" | "general"

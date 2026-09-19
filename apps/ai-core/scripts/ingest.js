@@ -32,6 +32,11 @@ const DATASETS = [
         name: 'InPASS Patent Prosecutions',
         dir: path.join(workspaceRoot, 'inpass'),
         category: 'patent_doc'
+    },
+    {
+        name: 'International Treaties & Agreements (WIPO GRATK, PCT, Nagoya, TRIPS)',
+        dir: path.join(workspaceRoot, 'international_treaties'),
+        category: 'guideline'
     }
 ];
 

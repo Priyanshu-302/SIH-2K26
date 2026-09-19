@@ -3,8 +3,10 @@ import { X, BookMarked, Scale } from 'lucide-react';
 import { useChatStore } from '../../store/chatStore';
 import { useUIStore } from '../../store/uiStore';
 import { CitationCard } from './CitationCard';
+import { useT } from '../../config/i18n';
 
 export function CitationPanel() {
+  const t = useT();
   const { selectedCitation, messages } = useChatStore();
   const { closeCitationPanel } = useUIStore();
 
@@ -22,7 +24,7 @@ export function CitationPanel() {
         <div className="flex items-center gap-2">
           <Scale className="w-5 h-5 text-ayur-700" />
           <h3 className="font-heading font-bold text-slate-900 text-sm">
-            Legal Grounding & Citations
+            {t('citationsPanelTitle')}
           </h3>
         </div>
         <button
@@ -38,7 +40,7 @@ export function CitationPanel() {
         {selectedCitation ? (
           <div>
             <span className="text-[10px] uppercase font-bold text-ayur-800 tracking-wider mb-2 block">
-              Highlighted Reference
+              {t('highlightedReference')}
             </span>
             <CitationCard citation={selectedCitation} />
           </div>
@@ -46,12 +48,12 @@ export function CitationPanel() {
 
         <div>
           <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-3 block">
-            All Groundings in Current Assessment ({latestCitations.length})
+            {t('allGroundings')} ({latestCitations.length})
           </span>
           {latestCitations.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-xs">
               <BookMarked className="w-8 h-8 mx-auto mb-2 text-sage-300" />
-              <p>No citations extracted for this assessment yet.</p>
+              <p>{t('noCitationsFound')}</p>
             </div>
           ) : (
             <div className="space-y-3">

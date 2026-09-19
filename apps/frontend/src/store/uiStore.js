@@ -5,7 +5,10 @@ const isDesktop = typeof window !== 'undefined' ? window.innerWidth >= 768 : tru
 export const useUIStore = create((set) => ({
   isCitationPanelOpen: false,
   isSidebarOpen: isDesktop,
+  isVoiceActive: false,
   toasts: [],
+
+  setVoiceActive: (val) => set({ isVoiceActive: val }),
 
   toggleCitationPanel: () => set((state) => ({ isCitationPanelOpen: !state.isCitationPanelOpen })),
   openCitationPanel: () => set({ isCitationPanelOpen: true }),

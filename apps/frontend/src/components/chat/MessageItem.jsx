@@ -1,12 +1,22 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { User, Bot } from 'lucide-react';
+import { User, Bot, FileText } from 'lucide-react';
 import { CitationBadge } from '../citation/CitationBadge';
+import { useFormStore } from '../../store/formStore';
+import { useT } from '../../config/i18n';
+import { useLanguageStore } from '../../store/languageStore';
+import { applyOfflineGlossary } from '../../services/bhashiniService';
 
 export const MessageItem = React.memo(function MessageItem({ message }) {
+  const t = useT();
+  const selectedLanguage = useLanguageStore((s) => s.selectedLanguage);
   const isUser = message.role === 'user';
   const citations = message.citations || [];
+
+  const displayContent = React.useMemo(() => {
+    return applyOfflineGlossary(message.content, selectedLanguage);
+  }, [message.content, selectedLanguage]);
 
   // Recursive citation replacer for text inside Markdown nodes
   const renderWithCitations = (children) => {
@@ -97,7 +107,7 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
         return (
           <div className="parchment-box rounded-xl p-3.5 my-2.5 text-xs font-serif leading-relaxed border-l-4 border-l-goldParchment-500 shadow-sm bg-goldParchment-50/50">
             <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-amber-900 block mb-1">
-              Classical Manuscript Reference:
+              {t('classicalManuscript')}
             </span>
             <p className="italic text-slate-800">{children}</p>
           </div>
@@ -178,11 +188,57 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
         }`}
       >
         {isUser ? (
-          <p className="leading-relaxed">{message.content}</p>
+          <p className="leading-relaxed">{displayContent}</p>
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-            {message.content}
-          </ReactMarkdown>
+          <>
+            {message.jurisdiction && (
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-sage-100">
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                    message.jurisdiction === 'international'
+                      ? 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    <span>{message.jurisdiction === 'international' ? '🌐' : '🇮🇳'}</span>
+                    <span>{message.jurisdiction === 'international' ? t('internationalAssessmentBadge') : t('nationalAssessmentBadge')}</span>
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 hidden sm:inline">
+                  {message.jurisdiction === 'international' ? t('internationalBadgeSub') : t('nationalBadgeSub')}
+                </span>
+              </div>
+            )}
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {displayContent}
+            </ReactMarkdown>
+
+            {message.content && message.content.length > 80 && (
+              <div className="mt-4 pt-3 border-t border-sage-200/60 flex flex-wrap items-center justify-between gap-2.5">
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {t('needStatutoryForms')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    useFormStore.getState().openFormModal({
+                      sessionId: message.sessionId,
+                      conversationText: message.content,
+                      initialTab: message.jurisdiction === 'international' ? 'IPO_FORM_25' : 'NBA_FORM_1',
+                    });
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                    message.jurisdiction === 'international'
+                      ? 'bg-indigo-700 hover:bg-indigo-800 text-white'
+                      : 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                  }`}
+                  title="Generate pre-filled IPO Form 25, NBA Form I/III, and WIPO GRATK SDS"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{t('generateFormsBtn')}</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

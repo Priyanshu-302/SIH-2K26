@@ -6,6 +6,7 @@ import historyRouter from './history.js';
 import healthRouter from './health.js';
 import authRouter from './auth.js';
 import evalsRouter from './evals.js';
+import formsRouter from './forms.js';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/chat', chatRouter);
 router.use('/documents', documentsRouter);
 router.use('/health', healthRouter);
 router.use('/evals', evalsRouter);
+router.use('/forms', formsRouter);
 
 export default router;

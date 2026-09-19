@@ -2,10 +2,18 @@ import { create } from 'zustand';
 
 export const useChatStore = create((set, get) => ({
   sessionId: typeof window !== 'undefined' ? localStorage.getItem('ayur_session_id') || null : null,
+  jurisdiction: typeof window !== 'undefined' ? localStorage.getItem('ayur_jurisdiction') || 'national' : 'national',
   messages: [],
   isStreaming: false,
   streamStatusText: '',
   selectedCitation: null,
+
+  setJurisdiction: (jurisdiction) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ayur_jurisdiction', jurisdiction);
+    }
+    set({ jurisdiction });
+  },
 
   setSessionId: (sessionId) => {
     if (typeof window !== 'undefined') {
@@ -30,10 +38,12 @@ export const useChatStore = create((set, get) => ({
   },
 
   addUserMessage: (content) => {
+    const currentJurisdiction = get().jurisdiction;
     const userMsg = {
       id: `user-${Date.now()}`,
       role: 'user',
       content,
+      jurisdiction: currentJurisdiction,
       citations: [],
       timestamp: new Date().toISOString(),
     };
@@ -46,10 +56,12 @@ export const useChatStore = create((set, get) => ({
   },
 
   initAssistantMessage: () => {
+    const currentJurisdiction = get().jurisdiction;
     const assistantMsg = {
       id: `assistant-${Date.now()}`,
       role: 'assistant',
       content: '',
+      jurisdiction: currentJurisdiction,
       citations: [],
       timestamp: new Date().toISOString(),
     };
@@ -57,7 +69,7 @@ export const useChatStore = create((set, get) => ({
     set((state) => ({
       messages: [...state.messages, assistantMsg],
       isStreaming: true,
-      streamStatusText: 'Analyzing legal framework...',
+      streamStatusText: currentJurisdiction === 'international' ? 'Consulting WIPO GRATK & PCT treaties...' : 'Analyzing legal framework...',
     }));
 
     return assistantMsg;
