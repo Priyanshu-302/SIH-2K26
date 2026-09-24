@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq';
 import mongoose from 'mongoose';
+import Redis from 'ioredis';
 import { getRedisClient } from '../config/redis.js';
 import config from '../config/index.js';
 import logger from '../config/logger.js';
@@ -38,12 +39,20 @@ async function simulateIngestion(jobId) {
  * Initializes the BullMQ Worker to process incoming document ingestion tasks
  */
 export function startIngestionWorker() {
-  const connection = getRedisClient();
   const correlationId = 'ingestion-worker';
 
-  logger.info('Initializing BullMQ Ingestion Worker...');
+  try {
+    logger.info('Initializing BullMQ Ingestion Worker...');
 
-  workerInstance = new Worker(
+    // BullMQ requires a dedicated Redis connection with maxRetriesPerRequest: null
+    const workerRedis = new Redis(config.REDIS_URL, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: false,
+      retryStrategy: (times) => (times > 3 ? null : Math.min(times * 1000, 2000)),
+    });
+
+    workerInstance = new Worker(
     'ingestion-jobs',
     async (job) => {
       const { jobId, filePath, title, category } = job.data;
@@ -95,8 +104,8 @@ export function startIngestionWorker() {
       logger.info({ correlationId, jobId, chunks: result.ingestedCount }, 'Ingestion job completed successfully');
     },
     { 
-      connection,
-      concurrency: 1, // Process one document at a time to save CPU cycles in demo
+      connection: workerRedis,
+      concurrency: 1,
     }
   );
 
@@ -118,8 +127,11 @@ export function startIngestionWorker() {
   });
 
   workerInstance.on('error', (err) => {
-    logger.error({ correlationId }, 'Worker system error:', err);
+    logger.warn({ correlationId, error: err.message }, 'Ingestion worker background notice');
   });
+  } catch (err) {
+    logger.warn({ correlationId, error: err.message }, 'Could not initialize ingestion worker (running in direct mode)');
+  }
 }
 
 /**

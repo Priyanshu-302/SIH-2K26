@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, ChevronRight, Pencil, Trash2, Check, X } from 'lucide-react';
 import { useT } from '../../config/i18n';
 import { useLanguageStore } from '../../store/languageStore';
-import { applyOfflineGlossary } from '../../services/bhashiniService';
+import { applyOfflineGlossary, translateText } from '../../services/bhashiniService';
 
 export function SessionListItem({
   session,
@@ -15,8 +15,29 @@ export function SessionListItem({
   const selectedLanguage = useLanguageStore((s) => s.selectedLanguage);
   const [isEditing, setIsEditing] = useState(false);
 
-  const displayTitle = React.useMemo(() => {
-    return applyOfflineGlossary(session.title || '', selectedLanguage) || t('untitledAssessment');
+  const [displayTitle, setDisplayTitle] = useState(() => 
+    applyOfflineGlossary(session.title || '', selectedLanguage) || t('untitledAssessment')
+  );
+
+  useEffect(() => {
+    if (!session.title || selectedLanguage === 'en') {
+      setDisplayTitle(session.title || t('untitledAssessment'));
+      return;
+    }
+
+    const syncTitle = applyOfflineGlossary(session.title, selectedLanguage);
+    setDisplayTitle(syncTitle || session.title || t('untitledAssessment'));
+
+    let isMounted = true;
+    translateText(session.title, 'en', selectedLanguage).then((res) => {
+      if (isMounted && res) {
+        setDisplayTitle(res);
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, [session.title, selectedLanguage, t]);
   const [editTitle, setEditTitle] = useState(session.title || '');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);

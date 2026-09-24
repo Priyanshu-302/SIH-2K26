@@ -1,9 +1,10 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut } from 'lucide-react';
+import { MessageSquare, UploadCloud, Leaf, Home, UserCheck, LogOut, BarChart3 } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { Footer } from '../components/common/Footer';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { useT } from '../config/i18n';
 
 export default function DashboardLayout() {
@@ -76,6 +77,21 @@ export default function DashboardLayout() {
             <span className="hidden sm:inline">{t('workspace')}</span>
           </NavLink>
 
+          <NavLink
+            to="/app/evals"
+            title="Benchmark Evaluations & Accuracy Audits"
+            className={({ isActive }) =>
+              `flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                isActive
+                  ? 'bg-white text-ayur-800 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`
+            }
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{t('evalsMetrics')}</span>
+          </NavLink>
+
           {user?.role === 'admin' && (
             <NavLink
               to="/app/admin"
@@ -109,10 +125,12 @@ export default function DashboardLayout() {
           </NavLink>
         </nav>
 
-        {/* Right: Home and User Avatar */}
+        {/* Right: Language Selector, Home and User Avatar */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <LanguageSelector />
+
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/')} 
             className="text-xs font-medium text-slate-500 hover:text-slate-800 hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-sage-50 transition-colors"
           >
             <Home className="w-3.5 h-3.5" />

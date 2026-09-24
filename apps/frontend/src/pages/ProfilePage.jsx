@@ -8,8 +8,10 @@ import { Button } from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
 import { updateProfileAPI } from '../services/apiService';
+import { useT } from '../config/i18n';
 
 export default function ProfilePage() {
+  const t = useT();
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuthStore();
   const { addToast } = useUIStore();
@@ -45,7 +47,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      addToast({ type: 'error', message: 'Name cannot be empty.' });
+      addToast({ type: 'error', message: t('nameEmptyError') });
       return;
     }
 
@@ -67,9 +69,9 @@ export default function ProfilePage() {
         researchFocus: researchFocus.trim(),
       });
 
-      addToast({ type: 'success', message: 'Profile updated successfully.' });
+      addToast({ type: 'success', message: t('profileUpdatedSuccess') });
     } catch (err) {
-      addToast({ type: 'error', message: err.message || 'Failed to save profile changes.' });
+      addToast({ type: 'error', message: err.message || t('profileSaveError') });
     } finally {
       setIsSaving(false);
     }
@@ -93,11 +95,11 @@ export default function ProfilePage() {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold font-heading text-slate-900 leading-tight">
-                  {name || user?.name || 'Researcher'}
+                  {name || user?.name || t('researcherRole')}
                 </h1>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Authenticated</span>
+                  <span>{t('authenticatedBadge')}</span>
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
@@ -105,7 +107,7 @@ export default function ProfilePage() {
               </p>
               <div className="pt-1">
                 <span className="inline-block px-2.5 py-0.5 rounded-lg text-[10px] uppercase font-bold tracking-wider bg-sage-100 text-ayur-800">
-                  {role === 'examiner' ? 'Patent Examiner' : role === 'attorney' ? 'IP Attorney' : 'Ayurveda Researcher'}
+                  {role === 'examiner' ? t('examinerOption') : role === 'attorney' ? t('attorneyOption') : role === 'admin' ? t('adminOption') : t('researcherOption')}
                 </span>
               </div>
             </div>
@@ -118,7 +120,7 @@ export default function ProfilePage() {
             className="text-xs text-red-600 hover:bg-red-50 hover:border-red-200 cursor-pointer self-start sm:self-center"
           >
             <LogOut className="w-3.5 h-3.5 mr-1.5" />
-            <span>Sign Out</span>
+            <span>{t('signOut')}</span>
           </Button>
         </div>
       </div>
@@ -126,9 +128,9 @@ export default function ProfilePage() {
       {/* Account Settings Form Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-soft-card border border-sage-200/80 space-y-6">
         <div>
-          <h2 className="text-base font-bold font-heading text-slate-900">Personal & Role Details</h2>
+          <h2 className="text-base font-bold font-heading text-slate-900">{t('personalRoleDetails')}</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Update your name and primary role to customize your Ayur-IP assessments.
+            {t('personalRoleDetailsDesc')}
           </p>
         </div>
 
@@ -138,7 +140,7 @@ export default function ProfilePage() {
             {/* Full Name */}
             <div>
               <label htmlFor="name" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Full Name
+                {t('fullName')}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -147,7 +149,7 @@ export default function ProfilePage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Dr. Rajesh Verma"
+                  placeholder={t('fullNamePlaceholder')}
                   required
                   className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all"
                 />
@@ -157,7 +159,7 @@ export default function ProfilePage() {
             {/* Email Address (Read-only) */}
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Email Address <span className="text-slate-400 font-normal">(Verified)</span>
+                {t('emailAddress')} <span className="text-slate-400 font-normal">({t('verifiedBadge')})</span>
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -174,7 +176,7 @@ export default function ProfilePage() {
             {/* Role / Designation */}
             <div>
               <label htmlFor="role" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Designation / Role
+                {t('designationRole')}
               </label>
               <div className="relative">
                 <Award className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -184,10 +186,10 @@ export default function ProfilePage() {
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all cursor-pointer"
                 >
-                  <option value="researcher">Ayurveda Formulation Researcher</option>
-                  <option value="examiner">Patent Examiner (Indian Patent Office)</option>
-                  <option value="attorney">IP Attorney & Regulatory Counsel</option>
-                  <option value="admin">Administrator</option>
+                  <option value="researcher">{t('researcherOption')}</option>
+                  <option value="examiner">{t('examinerOption')}</option>
+                  <option value="attorney">{t('attorneyOption')}</option>
+                  <option value="admin">{t('adminOption')}</option>
                 </select>
               </div>
             </div>
@@ -195,7 +197,7 @@ export default function ProfilePage() {
             {/* Organization / Affiliation */}
             <div>
               <label htmlFor="org" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Organization / Institution
+                {t('organizationInstitution')}
               </label>
               <div className="relative">
                 <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -204,7 +206,7 @@ export default function ProfilePage() {
                   type="text"
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value)}
-                  placeholder="e.g. Indian Patent Office (IPO) / CSIR-TKDL"
+                  placeholder={t('organizationPlaceholder')}
                   className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all"
                 />
               </div>
@@ -214,14 +216,14 @@ export default function ProfilePage() {
           {/* Research Focus */}
           <div>
             <label htmlFor="focus" className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Primary Research or Legal Specialization
+              {t('primarySpecialization')}
             </label>
             <input
               id="focus"
               type="text"
               value={researchFocus}
               onChange={(e) => setResearchFocus(e.target.value)}
-              placeholder="e.g. Polyherbal Synergies, Section 3(p) Traditional Knowledge Anticipation"
+              placeholder={t('specializationPlaceholder')}
               className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-ayur-600 focus:ring-2 focus:ring-ayur-500/10 transition-all"
             />
           </div>
@@ -236,12 +238,12 @@ export default function ProfilePage() {
               {isSaving ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Saving...</span>
+                  <span>{t('savingBtn')}</span>
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
+                  <span>{t('saveChangesBtn')}</span>
                 </>
               )}
             </button>
@@ -255,14 +257,14 @@ export default function ProfilePage() {
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Authentication Method</span>
+              <span>{t('authMethodTitle')}</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Signed in via passwordless authentication. Session tokens are encrypted and tied strictly to your account.
+              {t('authMethodDesc')}
             </p>
           </div>
           <div className="px-3 py-1.5 rounded-xl bg-sage-50 border border-sage-200 text-xs font-semibold text-ayur-800">
-            {user?.authProvider === 'google' ? 'Google Account' : 'Email OTP Verified'}
+            {user?.authProvider === 'google' ? t('googleAccount') : t('emailOtpVerified')}
           </div>
         </div>
       </div>

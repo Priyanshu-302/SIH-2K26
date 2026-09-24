@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Bot, FileText } from 'lucide-react';
@@ -6,7 +6,7 @@ import { CitationBadge } from '../citation/CitationBadge';
 import { useFormStore } from '../../store/formStore';
 import { useT } from '../../config/i18n';
 import { useLanguageStore } from '../../store/languageStore';
-import { applyOfflineGlossary } from '../../services/bhashiniService';
+import { applyOfflineGlossary, translateText } from '../../services/bhashiniService';
 
 export const MessageItem = React.memo(function MessageItem({ message }) {
   const t = useT();
@@ -14,8 +14,33 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
   const isUser = message.role === 'user';
   const citations = message.citations || [];
 
-  const displayContent = React.useMemo(() => {
-    return applyOfflineGlossary(message.content, selectedLanguage);
+  const [displayContent, setDisplayContent] = useState(() => 
+    applyOfflineGlossary(message.content, selectedLanguage)
+  );
+
+  useEffect(() => {
+    if (!message.content || selectedLanguage === 'en') {
+      setDisplayContent(message.content);
+      return;
+    }
+
+    // 1. Immediate sync translation
+    const syncTranslated = applyOfflineGlossary(message.content, selectedLanguage);
+    setDisplayContent(syncTranslated);
+
+    // 2. Full deep translation with caching
+    let isMounted = true;
+    translateText(message.content, 'en', selectedLanguage).then((res) => {
+      if (isMounted && res) {
+        setDisplayContent(res);
+      }
+    }).catch((err) => {
+      console.warn('[MessageItem translation notice]:', err);
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [message.content, selectedLanguage]);
 
   // Recursive citation replacer for text inside Markdown nodes

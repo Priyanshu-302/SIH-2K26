@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Send, Paperclip, Loader2 } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Send, Paperclip, Mic, MicOff, Loader2, Volume2 } from 'lucide-react';
 import { useChatStream } from '../../hooks/useChatStream';
 import { useDocumentStore } from '../../store/documentStore';
 import { useChatStore } from '../../store/chatStore';
 import { useLanguageStore } from '../../store/languageStore';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { useT } from '../../config/i18n';
 
 export function ChatInput() {
@@ -11,10 +12,19 @@ export function ChatInput() {
   const { submitQuery, isStreaming } = useChatStream();
   const { setIsUploadModalOpen } = useDocumentStore();
   const { jurisdiction, setJurisdiction } = useChatStore();
-  const { isTranslating } = useLanguageStore();
+  const { isTranslating, isSpeaking } = useLanguageStore();
   const t = useT();
 
   const isInternational = jurisdiction === 'international';
+
+  // Voice input — streams transcript directly into query state
+  const handleTranscript = useCallback((text) => {
+    setQuery(text);
+  }, []);
+
+  const { isListening, isSupported, startListening } = useVoiceInput({
+    onTranscript: handleTranscript,
+  });
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -34,7 +44,9 @@ export function ChatInput() {
     <form onSubmit={handleSend} className="max-w-4xl mx-auto relative w-full">
       <div
         className={`flex items-end gap-1.5 sm:gap-2 bg-alabaster-100 border rounded-2xl p-1.5 sm:p-2 transition-all shadow-inner ${
-          isInternational
+          isListening
+            ? 'border-red-400 ring-2 ring-red-100'
+            : isInternational
             ? 'border-indigo-200/80 focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-100'
             : 'border-sage-200 focus-within:border-ayur-600 focus-within:ring-2 focus-within:ring-ayur-100'
         }`}
@@ -54,6 +66,29 @@ export function ChatInput() {
           <Paperclip className="w-4 h-4" />
         </button>
 
+        {/* Voice Input Mic Button */}
+        {isSupported && (
+          <button
+            type="button"
+            onClick={startListening}
+            className={`p-1.5 sm:p-2 transition-all shrink-0 cursor-pointer rounded-lg ${
+              isListening
+                ? 'text-red-500 bg-red-50 animate-pulse'
+                : isInternational
+                ? 'text-slate-400 hover:text-indigo-700 hover:bg-indigo-50'
+                : 'text-slate-400 hover:text-ayur-700 hover:bg-ayur-50'
+            }`}
+            title={isListening ? t('listening') : t('speakQuery')}
+            aria-label={isListening ? t('listening') : t('speakQuery')}
+          >
+            {isListening ? (
+              <MicOff className="w-4 h-4" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
+          </button>
+        )}
+
         {/* Textarea */}
         <textarea
           rows={1}
@@ -61,7 +96,9 @@ export function ChatInput() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            isInternational
+            isListening
+              ? t('listening')
+              : isInternational
               ? t('placeholderInternational')
               : t('placeholderDomestic')
           }
@@ -104,10 +141,34 @@ export function ChatInput() {
       </div>
 
       {/* Status bar below input */}
-      {isTranslating && (
-        <div className="flex items-center gap-1.5 mt-1.5 px-3 text-[10px] font-semibold text-slate-500">
-          <Loader2 className="w-3 h-3 animate-spin" />
-          {t('translating')}
+      {(isListening || isTranslating || isSpeaking) && (
+        <div
+          className={`flex items-center gap-1.5 mt-1.5 px-3 text-[10px] font-semibold ${
+            isListening
+              ? 'text-red-500'
+              : isSpeaking
+              ? 'text-ayur-600'
+              : 'text-slate-500'
+          }`}
+        >
+          {isListening && (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+              {t('listening')}
+            </>
+          )}
+          {isTranslating && !isListening && (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {t('translating')}
+            </>
+          )}
+          {isSpeaking && !isListening && !isTranslating && (
+            <>
+              <Volume2 className="w-3 h-3" />
+              {t('playingAudio')}
+            </>
+          )}
         </div>
       )}
     </form>

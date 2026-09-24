@@ -22,8 +22,10 @@ export const SUPPORTED_LANGUAGES = [
 const STORAGE_KEY = 'ayur_language';
 
 export const useLanguageStore = create((set) => ({
-  /** Currently selected ISO-639 language code (strictly English for now) */
-  selectedLanguage: 'en',
+  /** Currently selected ISO-639 language code */
+  selectedLanguage: (typeof window !== 'undefined'
+    ? localStorage.getItem(STORAGE_KEY) || 'en'
+    : 'en'),
 
   /** True while a Bhashini translation API call is in-flight */
   isTranslating: false,
