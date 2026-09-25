@@ -47,13 +47,19 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
 
 
 
-  // Recursive citation replacer for text inside Markdown nodes
+  // Recursive citation and line-break replacer for text inside Markdown nodes
   const renderWithCitations = (children) => {
     if (typeof children === 'string') {
-      const parts = children.split(/(\[[^\]]+\])/g);
+      // Split on citations ([Doc 1], etc.) as well as <br> / <br/> / &lt;br&gt; tags
+      const parts = children.split(/(\[[^\]]+\]|<br\s*\/?>|&lt;br\s*\/?&gt;)/gi);
       if (parts.length === 1) return children;
 
       return parts.map((part, index) => {
+        // Handle raw or escaped <br> tags seamlessly as visual JSX line breaks
+        if (/^<br\s*\/?>$/i.test(part) || /^&lt;br\s*\/?&gt;$/i.test(part)) {
+          return <br key={`br-${index}`} />;
+        }
+
         if (part.startsWith('[') && part.endsWith(']')) {
           const tagContent = part.slice(1, -1).trim();
 

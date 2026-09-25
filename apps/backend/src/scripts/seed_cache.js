@@ -24,7 +24,7 @@ async function seedCache() {
 
 | Source | Content & Citations | Legal Implication |
 |---|---|---|
-| **Classical Ayurvedic Treatises** (*Charaka Samhita*, *Sushruta Samhita*, *Astanga Hridaya*) | • *Ashwagandha* documented for *śarīra-śakti* (vitality) and *medhā-vṛddhi* (intellect).<br>• *Brahmi* documented for *smṛti-śakti* (memory retention) and cognitive rejuvenation. | Both herbs are **individually anticipated** for cognitive and memory enhancement under Section 3(p). |
+| **Classical Ayurvedic Treatises** (*Charaka Samhita*, *Sushruta Samhita*, *Astanga Hridaya*) | • *Ashwagandha* documented for *śarīra-śakti* (vitality) and *medhā-vṛddhi* (intellect). • *Brahmi* documented for *smṛti-śakti* (memory retention) and cognitive rejuvenation. | Both herbs are **individually anticipated** for cognitive and memory enhancement under Section 3(p). |
 | **TKDL Database** (Traditional Knowledge Digital Library) | Multiple classical formulations indexed under *medhya-rasayana* containing Ashwagandha and Brahmi. | Directly cited by Patent Examiners to establish anticipation by public knowledge. |
 | **Shaafi Naturcure LLP v. Asst. Controller (2026:DHC:5157)** [Doc 1] | Delhi High Court affirmed refusal of herbal composition patent under Section 3(p) and Section 3(e) due to absence of synergistic proof. | Strict judicial precedent against granting patents for polyherbal combinations without quantified synergy. |
 | **Painkiller Composition FER Precedent** [Doc 2] | First Examination Report rejected herbal admixture under § 3(p) and § 3(e) and flagged non-compliance with NBA clearance under § 6(1). | Proves that examiners automatically link polyherbal claims with NBA disclosure requisites. |

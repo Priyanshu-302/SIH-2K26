@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b',
         temperature: 0.1,
-        max_tokens: 4000,
+        max_tokens: 8192,
         messages: [
           {
             role: 'system',
