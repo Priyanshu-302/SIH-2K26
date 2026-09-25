@@ -84,37 +84,38 @@ export function useVoiceInput({ onTranscript }) {
 
     recognizer.onresult = (event) => {
       if (isCancelledRef.current) return;
-      let interimBuffer = '';
-      let finalBuffer = finalTranscriptRef.current;
+      let finalTranscript = '';
+      let interimTranscript = '';
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      // SpeechRecognitionResultList maintains the complete session history.
+      // Iterating from 0 to results.length guarantees clean, idempotent transcription without mobile duplication.
+      for (let i = 0; i < event.results.length; ++i) {
         const result = event.results[i];
         const text = (result[0]?.transcript || '').trim();
         if (!text) continue;
 
         if (result.isFinal) {
-          if (finalBuffer && !finalBuffer.endsWith(' ')) {
-            finalBuffer += ' ' + text;
-          } else {
-            finalBuffer += text;
-          }
+          finalTranscript += (finalTranscript ? ' ' : '') + text;
         } else {
-          if (interimBuffer && !interimBuffer.endsWith(' ')) {
-            interimBuffer += ' ' + text;
-          } else {
-            interimBuffer += text;
-          }
+          interimTranscript += (interimTranscript ? ' ' : '') + text;
         }
       }
 
-      finalTranscriptRef.current = finalBuffer;
-      setInterimText(interimBuffer);
+      finalTranscriptRef.current = finalTranscript;
+      setInterimText(interimTranscript);
 
-      const combined = (finalBuffer && interimBuffer)
-        ? `${finalBuffer.trim()} ${interimBuffer.trim()}`
-        : (finalBuffer || interimBuffer).trim();
+      let combined = [finalTranscript, interimTranscript]
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join(' ')
+        .trim();
 
-      // Push combined (final + interim) to parent textarea in real-time
+      // De-duplicate any stuttered adjacent repeated words/phrases (common on Android mobile ASR)
+      combined = combined
+        .replace(/\b(\w+)(?:\s+\1\b)+/gi, '$1')
+        .replace(/\b(\w+(?:\s+\w+){1,4})(?:\s+\1\b)+/gi, '$1');
+
+      // Push clean combined (final + interim) to parent textarea in real-time
       if (onTranscript && !isCancelledRef.current) {
         onTranscript(combined);
       }
@@ -143,7 +144,10 @@ export function useVoiceInput({ onTranscript }) {
       setInterimText('');
       recognizerRef.current = null;
       if (!isCancelledRef.current && onTranscript && finalTranscriptRef.current) {
-        onTranscript(finalTranscriptRef.current.trim());
+        const finalClean = finalTranscriptRef.current.trim()
+          .replace(/\b(\w+)(?:\s+\1\b)+/gi, '$1')
+          .replace(/\b(\w+(?:\s+\w+){1,4})(?:\s+\1\b)+/gi, '$1');
+        onTranscript(finalClean);
       }
       isCancelledRef.current = false;
     };
