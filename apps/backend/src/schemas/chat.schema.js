@@ -6,9 +6,10 @@ import { z } from 'zod';
 export const askRequestSchema = z.object({
   body: z.object({
     query: z.string()
-      .min(3, { message: 'Query must be at least 3 characters long' })
-      .max(1000, { message: 'Query must not exceed 1000 characters' })
+      .min(1, { message: 'Query cannot be empty' })
+      .max(10000, { message: 'Query must not exceed 10,000 characters' })
       .trim(),
+
     sessionId: z.string().regex(/^[0-9a-fA-F]{24}$/, { 
       message: 'Session ID must be a valid 24-character hexadecimal MongoDB ObjectId' 
     }),
