@@ -1,6 +1,6 @@
 # 🧠 @ayur/ai-core — Legal Reasoning & Evaluation Engine
 
-The `@ayur/ai-core` package is the specialized artificial intelligence and legal reasoning kernel of the **Ayur-IP Platform**. It implements an autonomous multi-node **LangGraph state machine** combined with a dense **Qdrant Vector Database** indexing 3,311 atomic statutory and judicial chunks.
+The `@ayur/ai-core` package is the specialized artificial intelligence and legal reasoning kernel of the **Ayur-IP Platform**. It implements an autonomous multi-node **LangGraph state machine** combined with a dense **Qdrant Vector Database** indexing 3,311 atomic statutory, judicial, and classical Ayurvedic chunks.
 
 ---
 
@@ -10,41 +10,38 @@ The `@ayur/ai-core` package is the specialized artificial intelligence and legal
 graph TD
     Input["Input Query (from Backend/Client)"] --> Classifier["1️⃣ Classifier Node (Llama 3.1 8B)"]
     
-    Classifier --> Router{"Intent Routing"}
-    Router -->|"Patentability Assessment"| Retriever["2️⃣ Semantic Hybrid Retriever"]
-    Router -->|"Classical Formulation / TKDL"| Retriever
-    Router -->|"Direct Statutory Reference"| Generator["3️⃣ Generator Node (Llama 3.3 70B OSS)"]
+    Classifier --> Router{"Dual Regime Routing"}
+    Router -->|"National (Patents Act & BDA)"| Retriever["2️⃣ Semantic Hybrid Retriever"]
+    Router -->|"International (WIPO GRATK & PCT)"| Retriever
     
     Retriever -->|"Top-k Canonical Chunks"| Qdrant[("Qdrant Vector Store (3,311 Chunks)")]
-    Qdrant --> Generator
+    Qdrant --> Generator["3️⃣ Generator Node (Groq 8,192 Tokens)"]
     
     Generator --> Validator["4️⃣ Validator Node (Guardrail Heuristics)"]
-    Validator -->|"Hallucination or US Law Detected"| Generator
-    Validator -->|"Statutorily Grounded"| Output["✅ Canonical 5-Part Advisory Report"]
+    Validator -->|"Hallucination Detected"| Generator
+    Validator -->|"Statutorily Grounded"| Output["✅ 5-Section Statutory Advisory Dossier"]
 ```
 
 ### 1. Classifier Node (`src/agent/nodes/classifier.js`)
-- Classifies user intent into:
-  - `PATENTABILITY_ASSESSMENT`: Polyherbal recipes, extraction techniques, cognitive tonics.
-  - `TRADITIONAL_KNOWLEDGE_PRIOR_ART`: Samhita canons, TKDL prior art queries.
-  - `REGULATORY_COMPLIANCE`: BDA Section 6 approvals, Chapter IVA Ayurvedic drug licensing.
-  - `GEOGRAPHICAL_INDICATION`: GI registration criteria, homonymous conflicts, goods vs. services.
-  - `GENERAL_IP_INQUIRY`: Procedural patent office questions.
+- Classifies user queries across both domestic and international dimensions:
+  - `PATENTABILITY_ASSESSMENT`: Polyherbal compositions, extraction parameters, synergistic ratios.
+  - `TRADITIONAL_KNOWLEDGE_PRIOR_ART`: Samhita slokas, TKDL prior art anticipations.
+  - `REGULATORY_COMPLIANCE`: BDA Section 6 approvals, Rule 158-B proof of safety, FSSAI Ayurveda-Aahara.
+  - `INTERNATIONAL_EXPORT_WIPO`: WIPO GRATK Article 3 mandatory origin disclosure, PCT 30-Month window, US FDA DSHEA vs CDER botanical IND.
 
 ### 2. Semantic Hybrid Retriever (`src/agent/nodes/retriever.js`)
 - Interfaces with Qdrant vector collection (`ayur_ip_corpus`).
 - Generates 384-dimensional dense semantic embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`).
-- Retrieves top-$k$ relevant statutory sections, Samhita slokas, and landmark judgements with domain-specific metadata filtering.
+- Retrieves top-$k$ relevant statutory sections, Samhita slokas, and landmark judgements with jurisdiction filtering.
 
 ### 3. Generator Node (`src/agent/nodes/generator.js`)
 - Powered by high-speed inference on Groq using `openai/gpt-oss-120b` / `llama-3.3-70b-versatile`.
-- Configured with `maxTokens: 4000` to prevent cut-offs on extensive legal tables.
-- Formats structured 5-section legal reports with statutory tables, classical text citations, claim reformation strategies, and regulatory checklists.
+- Configured with `maxTokens: 8192` with strict completeness mandates to prevent mid-sentence cut-offs on extensive legal tables and dossiers.
+- Formats structured 5-section legal dossiers with statutory tables, classical text citations, claim reformation strategies, and regulatory checklists.
 
 ### 4. Validator Node (`src/agent/nodes/validator.js`)
-- Enforces strict Indian IP jurisdiction guardrails.
-- Scans for foreign law hallucinations (e.g., US 35 U.S.C. 101, Lanham Act, *Alice v. CLS Bank*).
-- Verifies presence of mandatory statutory sections (§ 3(p), § 3(e), § 10(4), BDA § 6).
+- Enforces strict jurisdiction guardrails (Domestic Indian vs. International Cross-Border).
+- Scans for foreign law hallucinations and verifies presence of required statutory citations (§ 3(p), § 3(e), § 10(4), BDA § 6, or WIPO GRATK Art. 3).
 
 ---
 
@@ -55,7 +52,6 @@ The evaluation engine provides verifiable, audit-grade verification of model per
 ### Evaluation Files
 - `evaluation/dataset.json`: 15 gold-standard QA benchmark cases covering Section 3(p), Section 25 pre-grant oppositions, Section 10(4) source disclosure, BDA Section 6, GI Section 10 & 25, DMR Act Section 3, and PPV&FR Section 39.
 - `evaluation/metrics.js`: Statutory section extractor regexes, case law citation normalizers, precision/recall/F1 metrics, and groundedness heuristic calculators.
-- `evaluation/eval_report.md`: Complete markdown report generated from the latest audit run.
 - `scripts/eval.js`: CLI runner executing the benchmark suite.
 
 ### Metric Formulations
@@ -90,6 +86,7 @@ pnpm ingest
 ```javascript
 import {
   runAgent,
+  runAgentStream,
   evaluateResponse,
   aggregateBenchmarkMetrics,
   extractAllCitations,

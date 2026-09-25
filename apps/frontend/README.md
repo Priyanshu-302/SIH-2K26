@@ -1,6 +1,6 @@
 # 🖥️ @ayur/frontend — Modern React 18 Intelligence Dashboard
 
-The `@ayur/frontend` package provides the responsive web interface for the **Ayur-IP Platform**. Built with **React 18**, **Vite**, and **Tailwind CSS**, it features real-time SSE markdown streaming, an audit-grade evaluation dashboard, and interactive document ingestion workflows.
+The `@ayur/frontend` package provides the responsive web interface for the **Ayur-IP Platform**. Built with **React 18**, **Vite**, and **Tailwind CSS**, it features real-time SSE markdown streaming, dual-regime legal switching, 9-language multilingual support, voice input with mobile ASR resilience, and pre-filled statutory form generation.
 
 ---
 
@@ -8,46 +8,58 @@ The `@ayur/frontend` package provides the responsive web interface for the **Ayu
 
 ```
 apps/frontend/src/
-├── components/                # Reusable UI components
-│   ├── MarkdownRenderer.jsx   # GitHub-flavored markdown with table & code highlight support
-│   ├── Navbar.jsx             # Top navigation bar & breadcrumbs
-│   ├── Sidebar.jsx            # Assessment history drawer with inline rename/delete
-│   └── ToastContainer.jsx     # Animated notification system
-├── layouts/
-│   └── DashboardLayout.jsx    # Core responsive layout with header, navigation & footer
+├── components/
+│   ├── chat/                  # ChatWindow, ChatInput, MessageItem (with <br> & citation parser)
+│   ├── citation/              # CitationPanel, CitationBadge, DocumentViewerModal
+│   ├── forms/                 # StatutoryFormsModal (IPO Form 25, NBA Form I/III, WIPO SDS)
+│   ├── history/               # HistorySidebar, SessionListItem
+│   ├── layout/                # Header, ModeSwitch, UserMenu, Breadcrumbs
+│   └── ui/                    # Button, Card, Toast, Modal primitives
+├── config/
+│   ├── api.js                 # API endpoint URLs and production fallbacks
+│   └── i18n.js                # Multilingual translations (9 Indic languages)
+├── hooks/
+│   ├── useChatStream.js       # SSE stream consumer with non-destructive state handling
+│   ├── useSession.js          # Chat session lifecycle manager
+│   ├── useTTS.js              # Text-to-speech audio player
+│   └── useVoiceInput.js       # Web Speech API hook with cumulative superset merging & deduplication
 ├── pages/
-│   ├── ChatPage.jsx           # Real-time streaming conversational legal workspace
-│   ├── EvalsPage.jsx          # Audit-grade Judge Evaluation & Benchmark Dossier
-│   ├── IngestPage.jsx         # Document upload console with progress indicators
+│   ├── AdminUploadPage.jsx    # Document ingestion console with progress trackers
+│   ├── ChatPage.jsx           # Core conversational legal advisory workspace
+│   ├── LandingPage.jsx        # Public overview, problem context, and feature showcase
 │   ├── LoginPage.jsx          # Google OAuth & Passwordless Email OTP authentication
-│   └── ProfilePage.jsx        # User settings & workspace management
+│   └── ProfilePage.jsx        # User profile and session audit settings
 ├── services/
-│   └── apiService.js          # SSE streaming client, Axios instances, and API helpers
+│   ├── apiService.js          # REST & streaming API client
+│   └── bhashiniService.js     # Backend neural translation client with format preservation
 └── store/
-    ├── authStore.js           # JWT authentication and user session state
-    ├── chatStore.js           # Active session messages and streaming token buffers
-    └── uiStore.js             # Toast notifications, modal states, and drawer toggles
+    ├── authStore.js           # JWT authentication and user profile state
+    ├── chatStore.js           # Active session, messages buffer, and jurisdiction mode
+    ├── formStore.js           # Statutory compliance forms state
+    ├── languageStore.js       # Selected language state & supported Indic locales
+    └── uiStore.js             # Toasts, citation drawer, and sidebar modal states
 ```
 
 ---
 
-## 🌟 Key User Interfaces
+## 🌟 Key User Interfaces & Capabilities
 
-### 1. Conversational Advisory Workspace (`/app/chat`)
+### 1. Conversational Advisory Workspace (`/chat`)
 - **Real-Time Streaming**: Word-by-word streaming token visualization with auto-scroll and manual interrupt.
-- **Rich Legal Formatting**: Formats statutory bar matrices, classical text citations, and regulatory checklists into styled cards and tables.
-- **Session Management**: Full create, rename, switch, and delete controls for patent assessment threads.
+- **Dual Statutory Toggle**: Instant toggle between **🇮🇳 India (Patents & BDA)** and **🌐 International (WIPO & PCT)**.
+- **Rich Legal Formatting**: Formats statutory bar matrices, classical Sanskrit slokas, and regulatory checklists with interactive citation badges `[Doc 1]`.
+- **Session Lifecycle**: Full create, rename, switch, and delete controls with automatic backend session auto-healing.
 
-### 2. Judge Evaluation & Benchmark Dossier (`/app/evals`)
-- **Top KPI Cards**: Displays live-computed Statutory Recall (98.3%), TKDL Grounding (97.8%), Speedup Multiplier (44x), and Token Efficiency (72.0% fewer tokens).
-- **Direct Model Comparison Matrix**: Evaluates Ayur-IP against ChatGPT-4o + Bing Web Search and Claude 3.5 Sonnet across 9 dimensions.
-- **Filterable Benchmark Case Accordions**: Filter by Section 3(p), Biodiversity/NBA, Geographical Indications, or Opposition Trap Cases.
-- **Live Benchmark Execution**: Real-time progress bar recalculating metrics on the fly.
-- **Export Audit Dossier**: Instant download of audit reports in GitHub-flavored Markdown.
+### 2. Multilingual Voice & Text Engine
+- Interactive speech-to-text input via the Web Speech API with cumulative superset merging (`mergeTranscriptResults`) and multi-pass deduplication to eliminate duplicate stutters on Android/iOS mobile devices.
+- Language selector offering instant translation across **9 Indian languages** with 100% Markdown table structure and citation preservation.
 
-### 3. Document Ingestion Console (`/app/ingest`)
-- Drag-and-drop document upload for PDFs, patent applications, and Ayurvedic texts.
-- Real-time status cards tracking extraction, chunking, and Qdrant vector indexing.
+### 3. Automated Statutory Compliance Docket Generator
+- One-click generation of pre-filled, compliant legal forms:
+  - **IPO Form 25**: Section 39 foreign filing clearance request.
+  - **NBA Form I & Form III**: Commercial utilization and IPR approvals under Biological Diversity Act.
+  - **WIPO GRATK Article 3 SDS**: Standardized Disclosure Statement for international patent filings.
+- Complete with PDF print, download, and copy-to-clipboard functionality.
 
 ---
 
