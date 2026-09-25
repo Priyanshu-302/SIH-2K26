@@ -42,19 +42,28 @@ export async function retrieverNode(state) {
       queryParams.filter = filter;
     }
 
-    let results = [];
-    if (typeof qdrant.query === 'function') {
-      const response = await qdrant.query(COLLECTION_NAME, queryParams);
-      results = response?.points || (Array.isArray(response) ? response : []);
-    } else if (typeof qdrant.search === 'function') {
-      const response = await qdrant.search(COLLECTION_NAME, {
-        vector,
-        limit: config.TOP_K,
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        with_payload: true
-      });
-      results = Array.isArray(response) ? response : (response?.points || []);
-    }
+    // Query Qdrant with a 2.5s timeout safety race
+    const queryPromise = (async () => {
+      if (typeof qdrant.query === 'function') {
+        const response = await qdrant.query(COLLECTION_NAME, queryParams);
+        return response?.points || (Array.isArray(response) ? response : []);
+      } else if (typeof qdrant.search === 'function') {
+        const response = await qdrant.search(COLLECTION_NAME, {
+          vector,
+          limit: config.TOP_K,
+          filter: Object.keys(filter).length > 0 ? filter : undefined,
+          with_payload: true
+        });
+        return Array.isArray(response) ? response : (response?.points || []);
+      }
+      return [];
+    })();
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Qdrant retrieval timed out after 2500ms")), 2500)
+    );
+
+    const results = await Promise.race([queryPromise, timeoutPromise]);
 
     const documents = results.map((hit) => ({
       id: hit.id,
@@ -71,9 +80,10 @@ export async function retrieverNode(state) {
       retrievedDocuments: documents
     };
   } catch (err) {
-    console.error("Retriever node search failed:", err);
+    console.warn("[Retriever Node] Retrieval bypassed/fallback:", err?.message || err);
     return {
       retrievedDocuments: []
     };
   }
 }
+

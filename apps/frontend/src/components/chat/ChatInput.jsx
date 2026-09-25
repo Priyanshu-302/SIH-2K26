@@ -22,15 +22,19 @@ export function ChatInput() {
     setQuery(text);
   }, []);
 
-  const { isListening, isSupported, startListening } = useVoiceInput({
+  const { isListening, isSupported, startListening, stopListening } = useVoiceInput({
     onTranscript: handleTranscript,
   });
 
   const handleSend = (e) => {
     e?.preventDefault();
     if (!query.trim() || isStreaming || isTranslating) return;
-    submitQuery(query.trim());
+    const textToSend = query.trim();
+    if (isListening) {
+      stopListening();
+    }
     setQuery('');
+    submitQuery(textToSend);
   };
 
   const handleKeyDown = (e) => {
@@ -70,7 +74,13 @@ export function ChatInput() {
         {isSupported && (
           <button
             type="button"
-            onClick={startListening}
+            onClick={() => {
+              if (isListening) {
+                stopListening();
+              } else {
+                startListening();
+              }
+            }}
             className={`p-1.5 sm:p-2 transition-all shrink-0 cursor-pointer rounded-lg ${
               isListening
                 ? 'text-red-500 bg-red-50 animate-pulse'
@@ -88,6 +98,7 @@ export function ChatInput() {
             )}
           </button>
         )}
+
 
         {/* Textarea */}
         <textarea

@@ -35,13 +35,21 @@ export function useVoiceInput({ onTranscript }) {
     return lang?.bcp47 || 'en-IN';
   }, [selectedLanguage]);
 
+  const isCancelledRef = useRef(false);
+
   const stopListening = useCallback(() => {
+    isCancelledRef.current = true;
+    finalTranscriptRef.current = '';
+    setInterimText('');
+    setIsListening(false);
     if (recognizerRef.current) {
-      recognizerRef.current.stop();
+      try {
+        recognizerRef.current.abort();
+      } catch (e) {
+        // ignore
+      }
       recognizerRef.current = null;
     }
-    setIsListening(false);
-    setInterimText('');
   }, []);
 
   const startListening = useCallback(() => {
@@ -53,13 +61,15 @@ export function useVoiceInput({ onTranscript }) {
       return;
     }
 
-    // If already listening — stop
+    // If already listening — stop cleanly
     if (isListening) {
       stopListening();
       return;
     }
 
+    isCancelledRef.current = false;
     finalTranscriptRef.current = '';
+    setInterimText('');
 
     const recognizer = new SpeechRecognition();
     recognizer.lang = getBcp47();
@@ -73,28 +83,46 @@ export function useVoiceInput({ onTranscript }) {
     };
 
     recognizer.onresult = (event) => {
+      if (isCancelledRef.current) return;
       let interimBuffer = '';
       let finalBuffer = finalTranscriptRef.current;
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
+        const text = (result[0]?.transcript || '').trim();
+        if (!text) continue;
+
         if (result.isFinal) {
-          finalBuffer += result[0].transcript;
+          if (finalBuffer && !finalBuffer.endsWith(' ')) {
+            finalBuffer += ' ' + text;
+          } else {
+            finalBuffer += text;
+          }
         } else {
-          interimBuffer += result[0].transcript;
+          if (interimBuffer && !interimBuffer.endsWith(' ')) {
+            interimBuffer += ' ' + text;
+          } else {
+            interimBuffer += text;
+          }
         }
       }
 
       finalTranscriptRef.current = finalBuffer;
       setInterimText(interimBuffer);
 
+      const combined = (finalBuffer && interimBuffer)
+        ? `${finalBuffer.trim()} ${interimBuffer.trim()}`
+        : (finalBuffer || interimBuffer).trim();
+
       // Push combined (final + interim) to parent textarea in real-time
-      if (onTranscript) {
-        onTranscript(finalBuffer + interimBuffer);
+      if (onTranscript && !isCancelledRef.current) {
+        onTranscript(combined);
       }
     };
 
+
     recognizer.onerror = (event) => {
+      if (isCancelledRef.current) return;
       console.error('[Voice] SpeechRecognition error:', event.error);
       if (event.error === 'not-allowed') {
         addToast({
@@ -114,10 +142,10 @@ export function useVoiceInput({ onTranscript }) {
       setIsListening(false);
       setInterimText('');
       recognizerRef.current = null;
-      // Commit final transcript to parent
-      if (onTranscript && finalTranscriptRef.current) {
+      if (!isCancelledRef.current && onTranscript && finalTranscriptRef.current) {
         onTranscript(finalTranscriptRef.current.trim());
       }
+      isCancelledRef.current = false;
     };
 
     recognizerRef.current = recognizer;
@@ -128,6 +156,7 @@ export function useVoiceInput({ onTranscript }) {
       stopListening();
     }
   }, [isSupported, isListening, getBcp47, onTranscript, stopListening, addToast]);
+
 
   // Clean up on unmount
   useEffect(() => {

@@ -96,40 +96,8 @@ export function useChatStream() {
               case 'done':
                 finishStreaming();
                 window.dispatchEvent(new Event('refresh_sessions'));
-
-                // ── Translate AI response → user language (if not English) ──
-                if (selectedLanguage !== 'en') {
-                  (async () => {
-                    const state = useChatStore.getState();
-                    const msgs = state.messages;
-                    const lastMsg = msgs[msgs.length - 1];
-                    if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.content) return;
-
-                    try {
-                      setIsTranslating(true);
-                      const translated = await translateText(
-                        lastMsg.content,
-                        'en',
-                        selectedLanguage
-                      );
-                      if (translated && translated !== lastMsg.content) {
-                        useChatStore.setState((s) => {
-                          const updated = [...s.messages];
-                          const idx = updated.length - 1;
-                          if (updated[idx]?.role === 'assistant') {
-                            updated[idx] = { ...updated[idx], content: translated };
-                          }
-                          return { messages: updated };
-                        });
-                      }
-                    } catch (_) {
-                      // silently skip — English response still shown
-                    } finally {
-                      setIsTranslating(false);
-                    }
-                  })();
-                }
                 break;
+
 
               default:
                 break;

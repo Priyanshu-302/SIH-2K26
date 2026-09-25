@@ -8,10 +8,12 @@ import authRouter from './auth.js';
 import evalsRouter from './evals.js';
 import formsRouter from './forms.js';
 import pingRouter from './ping.js';
+import translateRouter from './translate.js';
 
 const router = Router();
 
 router.use('/ping', pingRouter);
+router.use('/translate', translateRouter);
 router.use('/auth', authRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/sessions', historyRouter); // Mounts /sessions/:sessionId/history
@@ -20,5 +22,6 @@ router.use('/documents', documentsRouter);
 router.use('/health', healthRouter);
 router.use('/evals', evalsRouter);
 router.use('/forms', formsRouter);
+
 
 export default router;

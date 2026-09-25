@@ -14,34 +14,38 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
   const isUser = message.role === 'user';
   const citations = message.citations || [];
 
-  const [displayContent, setDisplayContent] = useState(() => 
-    applyOfflineGlossary(message.content, selectedLanguage)
-  );
+  const [displayContent, setDisplayContent] = useState(message.content || '');
+  const [isTranslatingMsg, setIsTranslatingMsg] = useState(false);
 
   useEffect(() => {
     if (!message.content || selectedLanguage === 'en') {
-      setDisplayContent(message.content);
+      setDisplayContent(message.content || '');
+      setIsTranslatingMsg(false);
       return;
     }
 
-    // 1. Immediate sync translation
-    const syncTranslated = applyOfflineGlossary(message.content, selectedLanguage);
-    setDisplayContent(syncTranslated);
-
-    // 2. Full deep translation with caching
     let isMounted = true;
-    translateText(message.content, 'en', selectedLanguage).then((res) => {
-      if (isMounted && res) {
-        setDisplayContent(res);
-      }
-    }).catch((err) => {
-      console.warn('[MessageItem translation notice]:', err);
-    });
+    setIsTranslatingMsg(true);
+
+    translateText(message.content, 'en', selectedLanguage)
+      .then((res) => {
+        if (isMounted && res) {
+          setDisplayContent(res);
+        }
+      })
+      .catch((err) => {
+        console.warn('[MessageItem translation notice]:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsTranslatingMsg(false);
+      });
 
     return () => {
       isMounted = false;
     };
   }, [message.content, selectedLanguage]);
+
+
 
   // Recursive citation replacer for text inside Markdown nodes
   const renderWithCitations = (children) => {
@@ -228,11 +232,20 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
                     <span>{message.jurisdiction === 'international' ? t('internationalAssessmentBadge') : t('nationalAssessmentBadge')}</span>
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-500 hidden sm:inline">
-                  {message.jurisdiction === 'international' ? t('internationalBadgeSub') : t('nationalBadgeSub')}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isTranslatingMsg && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                      Translating...
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-500 hidden sm:inline">
+                    {message.jurisdiction === 'international' ? t('internationalBadgeSub') : t('nationalBadgeSub')}
+                  </span>
+                </div>
               </div>
             )}
+
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {displayContent}
             </ReactMarkdown>
