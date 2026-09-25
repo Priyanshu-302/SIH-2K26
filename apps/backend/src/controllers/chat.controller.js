@@ -22,22 +22,14 @@ export const chatController = {
     const { query, sessionId, historyOverride, jurisdiction = 'national' } = req.body;
 
     try {
-      // 1. Verify session or reject if non-existent
+      // 1. Verify session or create fresh session if non-existent / deleted
       let session = null;
       if (sessionId && sessionId.match(/^[0-9a-fA-F]{24}$/)) {
         session = await Session.findById(sessionId);
       }
 
-      if (sessionId && !session) {
-        return res.status(400).json({
-          error: 'Invalid Session',
-          code: 'SESSION_INVALID',
-          details: 'The specified session ID does not exist.'
-        });
-      }
-
       if (!session) {
-        logger.info({ correlationId, requestedSessionId: sessionId }, 'Session missing or omitted, creating fresh session');
+        logger.info({ correlationId, requestedSessionId: sessionId }, 'Session missing, deleted, or omitted, creating fresh session');
         session = new Session({
           title: query.length > 55 ? query.slice(0, 52) + '...' : query,
           userId: req.user?.id || undefined,

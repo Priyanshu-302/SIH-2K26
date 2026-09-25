@@ -6,6 +6,7 @@ import apiRouter from './routes/index.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Standard request handlers configurations
 app.use(cors());

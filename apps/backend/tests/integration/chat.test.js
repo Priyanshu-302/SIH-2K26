@@ -40,14 +40,22 @@ describe('Chat API Integration Tests', () => {
       expect(response.body.code).toBe('REQUEST_VALIDATION_FAILED');
     });
 
-    it('should reject requests with non-existent sessionIds', async () => {
+    it('should auto-heal and create a fresh session for non-existent sessionIds', async () => {
       const nonExistentId = new mongoose.Types.ObjectId().toString();
       const response = await request(app)
         .post('/api/chat/ask')
-        .send({ query: 'Triphala formulation patent search', sessionId: nonExistentId });
+        .send({ query: 'Triphala formulation patent search', sessionId: nonExistentId })
+        .expect('Content-Type', /text\/event-stream/);
 
-      expect(response.status).toBe(400);
-      expect(response.body.code).toBe('SESSION_INVALID');
+      expect(response.status).toBe(200);
+      const lines = response.text.split('\n\n');
+      const events = lines
+        .filter(line => line.startsWith('data: '))
+        .map(line => JSON.parse(line.substring(6)));
+
+      const sessionEvent = events.find(e => e.type === 'session');
+      expect(sessionEvent).toBeDefined();
+      expect(sessionEvent.sessionId).toBeDefined();
     });
 
     it('should establish SSE channel and stream tokens, citations, and terminal done events', async () => {

@@ -12,7 +12,7 @@ export const askRequestSchema = z.object({
 
     sessionId: z.string().regex(/^[0-9a-fA-F]{24}$/, { 
       message: 'Session ID must be a valid 24-character hexadecimal MongoDB ObjectId' 
-    }),
+    }).optional(),
     jurisdiction: z.enum(['national', 'international']).default('national'),
     historyOverride: z.array(
       z.object({
