@@ -247,5 +247,5 @@ pnpm --filter @ayur/ai-core evaluate
 
 Built with ❤️ by **Team BWU SankalpX** for **Smart India Hackathon (SIH 2026)** to empower Indian herbal innovation and protect national biological heritage.
 
-* **Team**: BWU SankalpX
+* **Team**: SankalpX BWU
 * **License**: MIT License — Open for national research & educational implementation.
