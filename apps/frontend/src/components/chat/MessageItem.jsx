@@ -6,7 +6,7 @@ import { CitationBadge } from '../citation/CitationBadge';
 import { useFormStore } from '../../store/formStore';
 import { useT } from '../../config/i18n';
 import { useLanguageStore } from '../../store/languageStore';
-import { applyOfflineGlossary, translateText } from '../../services/bhashiniService';
+import { applyOfflineGlossary, translateText, getSyncCachedTranslation, sanitizeMarkdownStructure } from '../../services/bhashiniService';
 
 export const MessageItem = React.memo(function MessageItem({ message }) {
   const t = useT();
@@ -14,7 +14,20 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
   const isUser = message.role === 'user';
   const citations = message.citations || [];
 
-  const [displayContent, setDisplayContent] = useState(message.content || '');
+  const getImmediateContent = () => {
+    if (!message.content || selectedLanguage === 'en') {
+      return message.content || '';
+    }
+    const cached = getSyncCachedTranslation(message.content, 'en', selectedLanguage);
+    if (cached) return sanitizeMarkdownStructure(cached);
+    const glossary = applyOfflineGlossary(message.content, selectedLanguage);
+    if (glossary && glossary !== message.content) {
+      return sanitizeMarkdownStructure(glossary);
+    }
+    return message.content || '';
+  };
+
+  const [displayContent, setDisplayContent] = useState(getImmediateContent);
   const [isTranslatingMsg, setIsTranslatingMsg] = useState(false);
 
   useEffect(() => {
@@ -24,13 +37,28 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
       return;
     }
 
+    // 1. Check synchronous cache immediately (0ms response)
+    const cached = getSyncCachedTranslation(message.content, 'en', selectedLanguage);
+    if (cached) {
+      setDisplayContent(sanitizeMarkdownStructure(cached));
+      setIsTranslatingMsg(false);
+      return;
+    }
+
+    // 2. Set offline glossary for instant partial preview if available
+    const quickGlossary = applyOfflineGlossary(message.content, selectedLanguage);
+    if (quickGlossary && quickGlossary !== message.content) {
+      setDisplayContent(sanitizeMarkdownStructure(quickGlossary));
+    }
+
     let isMounted = true;
     setIsTranslatingMsg(true);
 
+    // 3. Perform full high-fidelity backend translation in background
     translateText(message.content, 'en', selectedLanguage)
       .then((res) => {
         if (isMounted && res) {
-          setDisplayContent(res);
+          setDisplayContent(sanitizeMarkdownStructure(res));
         }
       })
       .catch((err) => {
@@ -134,11 +162,14 @@ export const MessageItem = React.memo(function MessageItem({ message }) {
       </h4>
     ),
     p: ({ children }) => {
-      // Check for Sanskrit verses or classical blocks denoted by Devanagari script
+      // Check for explicit classical Sanskrit verses or citations (e.g. ॥ verse ॥ or *श्लोक:*)
       const strContent = typeof children === 'string' ? children : '';
-      const isSanskrit = /[\u0900-\u097F]/.test(strContent);
+      const isClassicalVerse =
+        (strContent.includes('॥') || strContent.includes('श्लोक:') || strContent.includes('चरक संहिता') || strContent.includes('सुश्रुत संहिता')) &&
+        !strContent.includes('|') &&
+        strContent.length < 400;
 
-      if (isSanskrit && !isUser) {
+      if (isClassicalVerse && !isUser && selectedLanguage === 'en') {
         return (
           <div className="parchment-box rounded-xl p-3.5 my-2.5 text-xs font-serif leading-relaxed border-l-4 border-l-goldParchment-500 shadow-sm bg-goldParchment-50/50">
             <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-amber-900 block mb-1">

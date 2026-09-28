@@ -439,127 +439,105 @@ const OFFLINE_GLOSSARY = {
 
 const translationTextCache = new Map();
 
-/**
- * Structure-Preserving Markdown Translator
- * Translates cell-by-cell and line-by-line so tables, headings, lists,
- * citations, and markdown tokens never collapse or break.
- */
-async function translateRawText(snippet, fromLang, toLang) {
-  if (!snippet?.trim() || !toLang || toLang === 'en') return snippet;
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${fromLang}&tl=${toLang}&dt=t&q=${encodeURIComponent(snippet)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Translate fetch failed');
-    const data = await res.json();
-    if (Array.isArray(data?.[0])) {
-      return data[0].map((seg) => seg[0]).join('');
-    }
-    return snippet;
-  } catch (err) {
-    return applyOfflineGlossary(snippet, toLang);
+function hashString(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash |= 0;
   }
+  return Math.abs(hash).toString(36);
+}
+
+function getCacheKey(fromLang, toLang, text) {
+  const hash = hashString(text);
+  return `${fromLang}_${toLang}_${hash}_${text.length}`;
+}
+
+function getStorageCache(key) {
+  try {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`ayur_trans_${key}`) || null;
+    }
+  } catch (e) {}
+  return null;
+}
+
+function setStorageCache(key, val) {
+  try {
+    if (typeof window !== 'undefined' && val) {
+      localStorage.setItem(`ayur_trans_${key}`, val);
+    }
+  } catch (e) {}
+}
+
+export function sanitizeMarkdownStructure(text) {
+  if (!text || typeof text !== 'string') return text;
+  let sanitized = text;
+  // Ensure space after markdown headers (e.g. ###Heading -> ### Heading)
+  sanitized = sanitized.replace(/^(#{1,6})([^\s#])/gm, '$1 $2');
+  // Ensure blank line before markdown headers if preceded by non-blank line
+  sanitized = sanitized.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+  // Ensure blank line before markdown tables if preceded by non-table line
+  sanitized = sanitized.replace(/([^\n|])\n(\|[^\n]+\|)/g, '$1\n\n$2');
+  // Ensure blank line after markdown tables if followed by non-table line
+  sanitized = sanitized.replace(/(\|[^\n]+\|)\n([^\n|])/g, '$1\n\n$2');
+  // Clean up excessive empty lines
+  sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
+  return sanitized.trim();
+}
+
+export function getSyncCachedTranslation(text, fromLang = 'en', toLang) {
+  if (!text || !toLang || toLang === 'en' || fromLang === toLang) return text;
+  const shortKey = getCacheKey(fromLang, toLang, text);
+  if (translationTextCache.has(shortKey)) {
+    const val = translationTextCache.get(shortKey);
+    if (val && val !== text && !val.includes('LIMIT EXCEEDED') && !val.includes('QUERY LENGTH')) {
+      return sanitizeMarkdownStructure(val);
+    }
+    translationTextCache.delete(shortKey);
+  }
+  const stored = getStorageCache(shortKey);
+  if (stored) {
+    if (stored === text || stored.includes('LIMIT EXCEEDED') || stored.includes('QUERY LENGTH')) {
+      try { localStorage.removeItem(`ayur_trans_${shortKey}`); } catch (e) {}
+      return null;
+    }
+    const cleanStored = sanitizeMarkdownStructure(stored);
+    translationTextCache.set(shortKey, cleanStored);
+    return cleanStored;
+  }
+  return null;
 }
 
 async function translateOnlineFallback(text, fromLang = 'en', toLang) {
   if (!text || !toLang || toLang === 'en') return text;
 
-  // Protect citations and code blocks
-  const tagPlaceholders = [];
-  const sanitized = text.replace(/(\[[^\]]+\]|`[^`]+`)/g, (match) => {
-    const idx = tagPlaceholders.length;
-    tagPlaceholders.push(match);
-    return `___TAG_${idx}___`;
-  });
+  try {
+    const tagMap = [];
+    const protectedText = text.replace(/(\[[^\]]+\]|`[^`]+`|\||---|\*\*|###|##|#)/g, (match) => {
+      const idx = tagMap.length;
+      tagMap.push(match);
+      return `⟦${idx}⟧`;
+    });
 
-  const lines = sanitized.split('\n');
-
-  // Process line-by-line preserving Markdown structural tokens
-  const translatedLines = await Promise.all(
-    lines.map(async (rawLine) => {
-      // Normalize Unicode bullets to markdown list items
-      let line = rawLine.replace(/^\s*[•●▪·◦]\s*/, '* ');
-      const trimmed = line.trim();
-      if (!trimmed) return '';
-
-      // 1. Horizontal rules
-      if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-        return '---';
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(protectedText.slice(0, 1500))}&langpair=${fromLang}|${toLang}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      let trans = data.responseData?.translatedText;
+      if (trans && trans !== protectedText && !trans.includes('LIMIT EXCEEDED') && !trans.includes('QUERY LENGTH')) {
+        tagMap.forEach((tag, idx) => {
+          trans = trans.replace(new RegExp(`⟦\\s*${idx}\\s*⟧`, 'g'), tag);
+        });
+        return trans;
       }
+    }
+  } catch (e) {
+    console.warn('[Online Translate Fallback Error]:', e);
+  }
 
-      // 2. Table separator rows (e.g. |---|---| or | :--- | :--- |)
-      if (/^\|(\s*:?-+:?\s*\|)+$/.test(trimmed)) {
-        return trimmed;
-      }
-
-      // 3. Table content row (e.g. | Cell 1 | Cell 2 |)
-      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-        const cells = trimmed.split('|');
-        const translatedCells = await Promise.all(
-          cells.slice(1, -1).map(async (cell) => {
-            const cellTrim = cell.trim();
-            if (!cellTrim) return '';
-            // Strip and preserve any inner bolding
-            const hasBold = cellTrim.startsWith('**') && cellTrim.endsWith('**') && cellTrim.length > 4;
-            const content = hasBold ? cellTrim.slice(2, -2) : cellTrim;
-            const trans = await translateRawText(content, fromLang, toLang);
-            const cleanTrans = trans.replace(/^\*+|\*+$/g, '').trim();
-            return hasBold ? ` **${cleanTrans}** ` : ` ${cleanTrans} `;
-          })
-        );
-        return `|${translatedCells.join('|')}|`;
-      }
-
-      // 4. Headings (e.g. # Title, ## Title, ### Title)
-      const headingMatch = line.match(/^(\s*#{1,6}\s+)(.*)$/);
-      if (headingMatch) {
-        const [, prefix, headingText] = headingMatch;
-        const trans = await translateRawText(headingText, fromLang, toLang);
-        return `${prefix.trim()} ${trans.trim()}`;
-      }
-
-      // 5. Blockquotes (e.g. > Quote)
-      const quoteMatch = line.match(/^(\s*>\s*)(.*)$/);
-      if (quoteMatch) {
-        const [, prefix, quoteText] = quoteMatch;
-        const trans = await translateRawText(quoteText, fromLang, toLang);
-        return `> ${trans.trim()}`;
-      }
-
-      // 6. List items (e.g. * item, - item, 1. item)
-      const listMatch = line.match(/^(\s*(\*|-|\+|\d+\.)\s+)(.*)$/);
-      if (listMatch) {
-        const [, prefix, marker, listText] = listMatch;
-        const trans = await translateRawText(listText, fromLang, toLang);
-        const cleanTrans = trans.replace(/^\s*[•●▪·◦*]\s*/, '').trim();
-        return `${marker.includes('.') ? marker : '*'} ${cleanTrans}`;
-      }
-
-      // 7. Regular paragraph line
-      const trans = await translateRawText(line, fromLang, toLang);
-      return trans.trim();
-    })
-  );
-
-  let fullTranslated = translatedLines.join('\n');
-
-  // Fix spaced asterisks created by translators (e.g. * *bold* * -> **bold**)
-  fullTranslated = fullTranslated
-    .replace(/\*\s+\*/g, '**')
-    .replace(/\*\*\s+/g, '**')
-    .replace(/\s+\*\*/g, '**')
-    .replace(/\|\s+\|/g, '||')
-    .replace(/\n{3,}/g, '\n\n');
-
-  // Restore protected tags
-  tagPlaceholders.forEach((tag, idx) => {
-    const regex = new RegExp(`___TAG_${idx}___|___ TAG_${idx} ___|___TAG _ ${idx}___`, 'g');
-    fullTranslated = fullTranslated.replace(regex, tag);
-  });
-
-  return fullTranslated;
+  return applyOfflineGlossary(text, toLang);
 }
-
-
 
 export function applyOfflineGlossary(text, targetLang) {
   if (!text || targetLang === 'en') return text;
@@ -588,17 +566,29 @@ export async function translateText(text, fromLang = 'en', toLang) {
   if (fromLang === toLang) return text;
   if (!toLang || toLang === 'en') return text;
 
-  const cacheKey = `${fromLang}:${toLang}:${text}`;
-  // Only use cache if it does not contain corrupted artifact symbols
-  if (translationTextCache.has(cacheKey)) {
-    const cached = translationTextCache.get(cacheKey);
-    if (cached && !cached.includes('• •') && !cached.includes('------')) {
-      return cached;
+  const shortKey = getCacheKey(fromLang, toLang, text);
+  
+  // 1. Check RAM memory cache
+  if (translationTextCache.has(shortKey)) {
+    const val = translationTextCache.get(shortKey);
+    if (val && val !== text && !val.includes('LIMIT EXCEEDED') && !val.includes('QUERY LENGTH')) {
+      return val;
     }
-    translationTextCache.delete(cacheKey);
+    translationTextCache.delete(shortKey);
   }
 
-  // 1. High-Precision Backend Translate Route (Guarantees 100% Markdown & Table Structure for all languages)
+  // 2. Check persistent localStorage cache
+  const stored = getStorageCache(shortKey);
+  if (stored) {
+    if (stored === text || stored.includes('LIMIT EXCEEDED') || stored.includes('QUERY LENGTH')) {
+      try { localStorage.removeItem(`ayur_trans_${shortKey}`); } catch (e) {}
+    } else {
+      translationTextCache.set(shortKey, stored);
+      return stored;
+    }
+  }
+
+  // 3. High-Precision Backend Translate Route (Guarantees 100% Markdown & Table Structure for all languages)
   try {
     const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
     const res = await fetch(`${apiBase}/translate`, {
@@ -608,17 +598,18 @@ export async function translateText(text, fromLang = 'en', toLang) {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data?.translatedText && data.translatedText !== text) {
-        translationTextCache.set(cacheKey, data.translatedText);
-        return data.translatedText;
+      if (data?.translatedText && data.translatedText !== text && !data.translatedText.includes('LIMIT EXCEEDED')) {
+        const clean = sanitizeMarkdownStructure(data.translatedText);
+        translationTextCache.set(shortKey, clean);
+        setStorageCache(shortKey, clean);
+        return clean;
       }
     }
   } catch (err) {
     console.warn('[Backend Translate Notice]:', err);
   }
 
-
-  // 2. Try Bhashini inference if configured
+  // 4. Try Bhashini inference if configured
   if (isBhashiniConfigured()) {
     try {
       const serviceId = await fetchServiceId('translation', fromLang, toLang);
@@ -646,9 +637,11 @@ export async function translateText(text, fromLang = 'en', toLang) {
         if (res.ok) {
           const data = await res.json();
           const translated = data?.pipelineResponse?.[0]?.output?.[0]?.target;
-          if (translated) {
-            translationTextCache.set(cacheKey, translated);
-            return translated;
+          if (translated && !translated.includes('LIMIT EXCEEDED') && !translated.includes('QUERY LENGTH')) {
+            const clean = sanitizeMarkdownStructure(translated);
+            translationTextCache.set(shortKey, clean);
+            setStorageCache(shortKey, clean);
+            return clean;
           }
         }
       }
@@ -657,22 +650,27 @@ export async function translateText(text, fromLang = 'en', toLang) {
     }
   }
 
-  // 3. Online translation fallback
+  // 5. Online translation fallback
   try {
     const onlineRes = await translateOnlineFallback(text, fromLang, toLang);
-    if (onlineRes && onlineRes !== text) {
-      translationTextCache.set(cacheKey, onlineRes);
-      return onlineRes;
+    if (onlineRes && onlineRes !== text && !onlineRes.includes('LIMIT EXCEEDED')) {
+      const clean = sanitizeMarkdownStructure(onlineRes);
+      translationTextCache.set(shortKey, clean);
+      setStorageCache(shortKey, clean);
+      return clean;
     }
   } catch (e) {
     console.warn('[Online Translate Fallback Error]:', e);
   }
 
-
-  // 3. Offline glossary fallback
+  // 6. Offline glossary fallback
   const offlineRes = applyOfflineGlossary(text, toLang);
-  translationTextCache.set(cacheKey, offlineRes);
-  return offlineRes;
+  if (offlineRes && offlineRes !== text) {
+    const clean = sanitizeMarkdownStructure(offlineRes);
+    translationTextCache.set(shortKey, clean);
+    return clean;
+  }
+  return sanitizeMarkdownStructure(text);
 }
 
 // ─── Step 3: Text-to-Speech (TTS) ──────────────────────────────────────────
